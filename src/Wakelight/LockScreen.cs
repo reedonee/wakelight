@@ -15,7 +15,11 @@ namespace Wakelight
 
         public static string Folder
         {
-            get { return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Wakelight", "lockscreen"); }
+            get
+            {
+                if (Demo.On) return Path.Combine(Demo.Folder, "data", "lockscreen");
+                return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Wakelight", "lockscreen");
+            }
         }
 
         public static string NewSnapshotPath()
@@ -26,6 +30,7 @@ namespace Wakelight
 
         public static bool HasPermission()
         {
+            if (Demo.On) return true;
             try
             {
                 using (var b = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64))
@@ -39,6 +44,7 @@ namespace Wakelight
         /// <summary>Apply an image (jpg/png/gif - gifs use their first frame).</summary>
         public static bool Apply(string image)
         {
+            if (Demo.On) { Log.Write("demo: lock screen not changed"); return true; }
             try
             {
                 string path = image;

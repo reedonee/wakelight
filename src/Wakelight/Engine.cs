@@ -208,6 +208,7 @@ namespace Wakelight
 
         void ApplyStartup()
         {
+            if (Demo.On) return;
             try
             {
                 using (var k = Registry.CurrentUser.CreateSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run"))
@@ -222,6 +223,7 @@ namespace Wakelight
         // ------------------------------------------------------------ hotkey
         void RegisterHotkey()
         {
+            if (Demo.On) return;
             if (hotkeyWindow == null)
             {
                 var p = new HwndSourceParameters("WakelightHotkey") { Width = 0, Height = 0, WindowStyle = 0 };

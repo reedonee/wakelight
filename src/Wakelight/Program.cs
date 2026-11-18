@@ -32,8 +32,9 @@ namespace Wakelight
             bool trayOnly = Array.Exists(args, a => a.Equals("--tray", StringComparison.OrdinalIgnoreCase));
 
             bool created;
-            single = new Mutex(true, "Local\\Wakelight.App", out created);
-            showSignal = new EventWaitHandle(false, EventResetMode.AutoReset, "Local\\Wakelight.Show");
+            string suffix = Demo.On ? ".Demo" : "";
+            single = new Mutex(true, "Local\\Wakelight.App" + suffix, out created);
+            showSignal = new EventWaitHandle(false, EventResetMode.AutoReset, "Local\\Wakelight.Show" + suffix);
             if (!created)
             {
                 if (!trayOnly) showSignal.Set();   // bring the running instance forward

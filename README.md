@@ -10,8 +10,19 @@ When you step away from your PC, it plays your live wallpaper full screen with a
 keeps the Windows lock screen matched to it, and locks the PC when you come back.
 
 <p align="center">
-  <img src="docs/installer-welcome.png" width="640" alt="Wakelight setup">
+  <img src="docs/app.png" width="760" alt="The Wakelight control window">
 </p>
+
+## The showcase
+
+Step away and your wallpaper takes the whole screen, live, with a quiet clock. Move the mouse and you're back
+(or on the sign-in screen, if you were gone longer than your lock time).
+
+<p align="center">
+  <img src="docs/showcase.jpg" width="760" alt="Wakelight showcase with clock">
+</p>
+
+<sub>Screenshots use an original demo scene ("Ember Lake"), not a Workshop wallpaper.</sub>
 
 ## Features
 
@@ -36,7 +47,13 @@ so Wakelight shows the live wallpaper *before* the lock and sets a matching stil
 
 ## Install
 
-Download `WakelightSetup.exe` from the [Releases](../../releases) page and run it. Setup:
+Download `WakelightSetup.exe` from the [Releases](../../releases) page and run it.
+
+<p align="center">
+  <img src="docs/installer-welcome.png" width="520" alt="Wakelight setup">
+</p>
+
+Setup:
 
 - installs to `C:\Program Files\Wakelight`,
 - adds Start menu / desktop shortcuts and the startup entry (each optional),
@@ -54,6 +71,15 @@ powershell -ExecutionPolicy Bypass -File .\build.ps1
 
 Output: `dist\Wakelight.exe` and `dist\WakelightSetup.exe` (the installer embeds the app).
 `tools\make-icon.ps1` regenerates the logo and icon.
+
+**Demo mode** (for screenshots): `tools\make-demo.ps1` builds an original demo scene and a stand-in
+Wallpaper Engine folder in `obj\demo`. Run the app with `WAKELIGHT_DEMO` pointing there; it then uses its
+own settings and never changes your lock screen, startup entry or hotkeys.
+
+```powershell
+.\tools\make-demo.ps1
+$env:WAKELIGHT_DEMO = "$PWD\obj\demo"; .\dist\Wakelight.exe
+```
 
 ```
 src/Wakelight   the app: engine, showcase, lock screen sync, control window

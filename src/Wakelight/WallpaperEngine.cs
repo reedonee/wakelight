@@ -149,6 +149,7 @@ namespace Wakelight
         /// <summary>Top-level window that hosts Wallpaper Engine's render (Progman on 24H2+, a WorkerW before).</summary>
         public static IntPtr FindRenderHost()
         {
+            if (Demo.On) return IntPtr.Zero;   // demo shows the demo preview image instead
             IntPtr found = IntPtr.Zero;
             Native.EnumProc child = (h, l) =>
             {

@@ -5,6 +5,16 @@ using System.Runtime.Serialization.Json;
 
 namespace Wakelight
 {
+    /// <summary>
+    /// Demo mode (WAKELIGHT_DEMO=&lt;folder&gt;, see tools\make-demo.ps1): separate settings,
+    /// a fake Wallpaper Engine folder, no system changes. Used for screenshots.
+    /// </summary>
+    public static class Demo
+    {
+        public static readonly string Folder = Environment.GetEnvironmentVariable("WAKELIGHT_DEMO");
+        public static bool On { get { return !string.IsNullOrEmpty(Folder); } }
+    }
+
     [DataContract]
     public class Settings
     {
@@ -42,6 +52,7 @@ namespace Wakelight
         {
             get
             {
+                if (Demo.On) return Path.Combine(Demo.Folder, "data");
                 return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Wakelight");
             }
         }
@@ -62,7 +73,9 @@ namespace Wakelight
                     }
             }
             catch (Exception ex) { Log.Write("settings load failed: " + ex.Message); }
-            return Defaults();
+            var d = Defaults();
+            if (Demo.On) d.WallpaperEngineDir = Path.Combine(Demo.Folder, "WallpaperEngine");
+            return d;
         }
 
         public void Save()
