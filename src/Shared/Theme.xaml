@@ -1,0 +1,309 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <!-- Wakelight palette: midnight indigo + ember glow -->
+  <Color x:Key="NightColor">#0B0A14</Color>
+  <Color x:Key="EmberColor">#FFB45C</Color>
+  <Color x:Key="RoseColor">#FF5C8A</Color>
+  <SolidColorBrush x:Key="Night" Color="#0B0A14"/>
+  <SolidColorBrush x:Key="Card" Color="#14121F"/>
+  <SolidColorBrush x:Key="CardHi" Color="#1C1930"/>
+  <SolidColorBrush x:Key="Line" Color="#272340"/>
+  <SolidColorBrush x:Key="Ink" Color="#F4EEE6"/>
+  <SolidColorBrush x:Key="Sub" Color="#9C95B0"/>
+  <SolidColorBrush x:Key="Faint" Color="#5E5878"/>
+  <SolidColorBrush x:Key="Ember" Color="#FFB45C"/>
+  <SolidColorBrush x:Key="Rose" Color="#FF5C8A"/>
+  <SolidColorBrush x:Key="Mint" Color="#7FE0B4"/>
+  <LinearGradientBrush x:Key="Glow" StartPoint="0,0" EndPoint="1,1">
+    <GradientStop Color="#FFC46B" Offset="0"/>
+    <GradientStop Color="#FF5C8A" Offset="1"/>
+  </LinearGradientBrush>
+  <LinearGradientBrush x:Key="GlowH" StartPoint="0,0" EndPoint="1,0">
+    <GradientStop Color="#FFC46B" Offset="0"/>
+    <GradientStop Color="#FF5C8A" Offset="1"/>
+  </LinearGradientBrush>
+  <RadialGradientBrush x:Key="Aura" Center="0.15,0" GradientOrigin="0.15,0" RadiusX="0.9" RadiusY="0.8">
+    <GradientStop Color="#33FF8A6A" Offset="0"/>
+    <GradientStop Color="#00FF5C8A" Offset="1"/>
+  </RadialGradientBrush>
+
+  <FontFamily x:Key="Display">Segoe UI Variable Display, Segoe UI</FontFamily>
+  <FontFamily x:Key="BodyFont">Segoe UI Variable Text, Segoe UI</FontFamily>
+
+  <Style x:Key="H1" TargetType="TextBlock">
+    <Setter Property="FontFamily" Value="{StaticResource Display}"/>
+    <Setter Property="FontSize" Value="26"/>
+    <Setter Property="FontWeight" Value="SemiBold"/>
+    <Setter Property="Foreground" Value="{StaticResource Ink}"/>
+  </Style>
+  <Style x:Key="H2" TargetType="TextBlock">
+    <Setter Property="FontFamily" Value="{StaticResource Display}"/>
+    <Setter Property="FontSize" Value="15"/>
+    <Setter Property="FontWeight" Value="SemiBold"/>
+    <Setter Property="Foreground" Value="{StaticResource Ink}"/>
+  </Style>
+  <Style x:Key="Eyebrow" TargetType="TextBlock">
+    <Setter Property="FontFamily" Value="{StaticResource BodyFont}"/>
+    <Setter Property="FontSize" Value="11"/>
+    <Setter Property="FontWeight" Value="SemiBold"/>
+    <Setter Property="Foreground" Value="{StaticResource Ember}"/>
+  </Style>
+  <Style x:Key="Body" TargetType="TextBlock">
+    <Setter Property="FontFamily" Value="{StaticResource BodyFont}"/>
+    <Setter Property="FontSize" Value="13"/>
+    <Setter Property="Foreground" Value="{StaticResource Ink}"/>
+    <Setter Property="TextWrapping" Value="Wrap"/>
+  </Style>
+  <Style x:Key="Hint" TargetType="TextBlock" BasedOn="{StaticResource Body}">
+    <Setter Property="FontSize" Value="12"/>
+    <Setter Property="Foreground" Value="{StaticResource Sub}"/>
+  </Style>
+
+  <Style x:Key="CardBox" TargetType="Border">
+    <Setter Property="Background" Value="{StaticResource Card}"/>
+    <Setter Property="BorderBrush" Value="{StaticResource Line}"/>
+    <Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="CornerRadius" Value="16"/>
+    <Setter Property="Padding" Value="20,18"/>
+    <Setter Property="Margin" Value="0,0,0,14"/>
+  </Style>
+
+  <!-- Buttons -->
+  <Style x:Key="Primary" TargetType="Button">
+    <Setter Property="Foreground" Value="#1A0F14"/>
+    <Setter Property="FontFamily" Value="{StaticResource BodyFont}"/>
+    <Setter Property="FontSize" Value="13"/>
+    <Setter Property="FontWeight" Value="SemiBold"/>
+    <Setter Property="Padding" Value="18,10"/>
+    <Setter Property="Cursor" Value="Hand"/>
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="Button">
+          <Grid>
+            <Border x:Name="halo" CornerRadius="12" Background="{StaticResource Glow}" Opacity="0">
+              <Border.Effect><BlurEffect Radius="18"/></Border.Effect>
+            </Border>
+            <Border x:Name="bg" CornerRadius="12" Background="{StaticResource Glow}" Padding="{TemplateBinding Padding}">
+              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+          </Grid>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="halo" Property="Opacity" Value="0.55"/></Trigger>
+            <Trigger Property="IsPressed" Value="True"><Setter TargetName="bg" Property="Opacity" Value="0.85"/></Trigger>
+            <Trigger Property="IsEnabled" Value="False"><Setter TargetName="bg" Property="Opacity" Value="0.4"/></Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <Style x:Key="Ghost" TargetType="Button">
+    <Setter Property="Foreground" Value="{StaticResource Ink}"/>
+    <Setter Property="FontFamily" Value="{StaticResource BodyFont}"/>
+    <Setter Property="FontSize" Value="13"/>
+    <Setter Property="FontWeight" Value="SemiBold"/>
+    <Setter Property="Padding" Value="16,10"/>
+    <Setter Property="Cursor" Value="Hand"/>
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="Button">
+          <Border x:Name="bg" CornerRadius="12" Background="{StaticResource CardHi}" BorderBrush="{StaticResource Line}"
+                  BorderThickness="1" Padding="{TemplateBinding Padding}">
+            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+          </Border>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="bg" Property="BorderBrush" Value="#5A4A6A"/></Trigger>
+            <Trigger Property="IsPressed" Value="True"><Setter TargetName="bg" Property="Background" Value="#241F3D"/></Trigger>
+            <Trigger Property="IsEnabled" Value="False"><Setter TargetName="bg" Property="Opacity" Value="0.4"/></Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <Style x:Key="Link" TargetType="Button">
+    <Setter Property="Foreground" Value="{StaticResource Ember}"/>
+    <Setter Property="FontFamily" Value="{StaticResource BodyFont}"/>
+    <Setter Property="FontSize" Value="12"/>
+    <Setter Property="FontWeight" Value="SemiBold"/>
+    <Setter Property="Cursor" Value="Hand"/>
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="Button">
+          <TextBlock x:Name="t" Text="{TemplateBinding Content}" Foreground="{TemplateBinding Foreground}"/>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="t" Property="TextDecorations" Value="Underline"/></Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <Style x:Key="Caption" TargetType="Button">
+    <Setter Property="Width" Value="46"/>
+    <Setter Property="Height" Value="40"/>
+    <Setter Property="Foreground" Value="{StaticResource Sub}"/>
+    <Setter Property="FontFamily" Value="Segoe Fluent Icons, Segoe MDL2 Assets"/>
+    <Setter Property="FontSize" Value="10"/>
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="Button">
+          <Border x:Name="bg" Background="Transparent">
+            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+          </Border>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+              <Setter TargetName="bg" Property="Background" Value="#1F1B33"/>
+              <Setter Property="Foreground" Value="{StaticResource Ink}"/>
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <!-- Toggle switch -->
+  <Style x:Key="Switch" TargetType="CheckBox">
+    <Setter Property="Cursor" Value="Hand"/>
+    <Setter Property="Foreground" Value="{StaticResource Ink}"/>
+    <Setter Property="FontFamily" Value="{StaticResource BodyFont}"/>
+    <Setter Property="FontSize" Value="13"/>
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="CheckBox">
+          <Grid Background="Transparent">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*"/>
+              <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <ContentPresenter VerticalAlignment="Center" Margin="0,0,16,0"/>
+            <Grid Grid.Column="1" Width="42" Height="24" VerticalAlignment="Center">
+              <Border x:Name="track" CornerRadius="12" Background="#2A2645"/>
+              <Border x:Name="trackOn" CornerRadius="12" Background="{StaticResource GlowH}" Opacity="0"/>
+              <Ellipse x:Name="knob" Width="18" Height="18" Fill="#B8B0C8" HorizontalAlignment="Left" Margin="3,0,0,0">
+                <Ellipse.RenderTransform><TranslateTransform x:Name="kx" X="0"/></Ellipse.RenderTransform>
+              </Ellipse>
+            </Grid>
+          </Grid>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsChecked" Value="True">
+              <Trigger.EnterActions>
+                <BeginStoryboard>
+                  <Storyboard>
+                    <DoubleAnimation Storyboard.TargetName="kx" Storyboard.TargetProperty="X" To="18" Duration="0:0:0.16"/>
+                    <DoubleAnimation Storyboard.TargetName="trackOn" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.16"/>
+                  </Storyboard>
+                </BeginStoryboard>
+              </Trigger.EnterActions>
+              <Trigger.ExitActions>
+                <BeginStoryboard>
+                  <Storyboard>
+                    <DoubleAnimation Storyboard.TargetName="kx" Storyboard.TargetProperty="X" To="0" Duration="0:0:0.16"/>
+                    <DoubleAnimation Storyboard.TargetName="trackOn" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.16"/>
+                  </Storyboard>
+                </BeginStoryboard>
+              </Trigger.ExitActions>
+              <Setter TargetName="knob" Property="Fill" Value="#1A0F14"/>
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <!-- Slider -->
+  <Style x:Key="FillButton" TargetType="RepeatButton">
+    <Setter Property="Focusable" Value="False"/>
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="RepeatButton">
+          <Border Height="6" CornerRadius="3" Background="{TemplateBinding Background}"/>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+  <Style x:Key="Range" TargetType="Slider">
+    <Setter Property="IsMoveToPointEnabled" Value="True"/>
+    <Setter Property="Cursor" Value="Hand"/>
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="Slider">
+          <Grid Height="26">
+            <Track x:Name="PART_Track">
+              <Track.DecreaseRepeatButton>
+                <RepeatButton Style="{StaticResource FillButton}" Background="{StaticResource GlowH}" Command="Slider.DecreaseLarge"/>
+              </Track.DecreaseRepeatButton>
+              <Track.IncreaseRepeatButton>
+                <RepeatButton Style="{StaticResource FillButton}" Background="#2A2645" Command="Slider.IncreaseLarge"/>
+              </Track.IncreaseRepeatButton>
+              <Track.Thumb>
+                <Thumb>
+                  <Thumb.Template>
+                    <ControlTemplate TargetType="Thumb">
+                      <Grid Width="20" Height="20">
+                        <Ellipse Fill="#FFB45C" Opacity="0.35"><Ellipse.Effect><BlurEffect Radius="8"/></Ellipse.Effect></Ellipse>
+                        <Ellipse Fill="#F4EEE6" Width="16" Height="16"/>
+                      </Grid>
+                    </ControlTemplate>
+                  </Thumb.Template>
+                </Thumb>
+              </Track.Thumb>
+            </Track>
+          </Grid>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <!-- Scroll bar: thin and quiet -->
+  <Style TargetType="ScrollBar">
+    <Setter Property="Width" Value="6"/>
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="ScrollBar">
+          <Track x:Name="PART_Track" IsDirectionReversed="True">
+            <Track.Thumb>
+              <Thumb>
+                <Thumb.Template>
+                  <ControlTemplate TargetType="Thumb">
+                    <Border CornerRadius="3" Background="#3A3456"/>
+                  </ControlTemplate>
+                </Thumb.Template>
+              </Thumb>
+            </Track.Thumb>
+          </Track>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <Style x:Key="MenuItemStyle" TargetType="MenuItem">
+    <Setter Property="Foreground" Value="{StaticResource Ink}"/>
+    <Setter Property="FontFamily" Value="{StaticResource BodyFont}"/>
+    <Setter Property="FontSize" Value="13"/>
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="MenuItem">
+          <Border x:Name="bg" Padding="14,8" CornerRadius="8" Background="Transparent">
+            <ContentPresenter ContentSource="Header"/>
+          </Border>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsHighlighted" Value="True"><Setter TargetName="bg" Property="Background" Value="#262140"/></Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+  <Style TargetType="ContextMenu">
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="ContextMenu">
+          <Border Background="#16132A" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="12" Padding="6">
+            <StackPanel IsItemsHost="True"/>
+          </Border>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+</ResourceDictionary>
