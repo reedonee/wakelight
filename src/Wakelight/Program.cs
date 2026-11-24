@@ -11,14 +11,14 @@ using Forms = System.Windows.Forms;
 [assembly: AssemblyTitle("Wakelight")]
 [assembly: AssemblyProduct("Wakelight")]
 [assembly: AssemblyDescription("Your live wallpaper, awake while you're away")]
-[assembly: AssemblyVersion("1.0.0.0")]
-[assembly: AssemblyFileVersion("1.0.0.0")]
+[assembly: AssemblyVersion("1.1.0.0")]
+[assembly: AssemblyFileVersion("1.1.0.0")]
 
 namespace Wakelight
 {
     public static class Program
     {
-        public const string Version = "1.0";
+        public const string Version = "1.1";
         public static BitmapImage LogoImage;
         static Engine engine;
         static MainWindow main;

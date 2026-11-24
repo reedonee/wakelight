@@ -306,4 +306,146 @@
       </Setter.Value>
     </Setter>
   </Style>
+
+  <!-- Tab bar (segmented) -->
+  <Style x:Key="Tab" TargetType="RadioButton">
+    <Setter Property="Foreground" Value="{StaticResource Sub}"/>
+    <Setter Property="FontFamily" Value="{StaticResource BodyFont}"/>
+    <Setter Property="FontSize" Value="13"/>
+    <Setter Property="FontWeight" Value="SemiBold"/>
+    <Setter Property="Cursor" Value="Hand"/>
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="RadioButton">
+          <Border x:Name="bg" CornerRadius="10" Padding="14,8" Background="Transparent">
+            <ContentPresenter HorizontalAlignment="Center"/>
+          </Border>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True"><Setter Property="Foreground" Value="{StaticResource Ink}"/></Trigger>
+            <Trigger Property="IsChecked" Value="True">
+              <Setter TargetName="bg" Property="Background" Value="#262140"/>
+              <Setter Property="Foreground" Value="{StaticResource Ink}"/>
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <!-- Option pill -->
+  <Style x:Key="Pill" TargetType="RadioButton">
+    <Setter Property="Foreground" Value="{StaticResource Ink}"/>
+    <Setter Property="FontFamily" Value="{StaticResource BodyFont}"/>
+    <Setter Property="FontSize" Value="12"/>
+    <Setter Property="FontWeight" Value="SemiBold"/>
+    <Setter Property="Margin" Value="0,0,8,8"/>
+    <Setter Property="Cursor" Value="Hand"/>
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="RadioButton">
+          <Grid>
+            <Border x:Name="bg" CornerRadius="10" Padding="12,7" Background="{StaticResource CardHi}" BorderBrush="{StaticResource Line}" BorderThickness="1">
+              <ContentPresenter HorizontalAlignment="Center"/>
+            </Border>
+            <Border x:Name="ring" CornerRadius="10" BorderBrush="{StaticResource GlowH}" BorderThickness="1.5" Opacity="0"/>
+          </Grid>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="bg" Property="BorderBrush" Value="#5A4A6A"/></Trigger>
+            <Trigger Property="IsChecked" Value="True">
+              <Setter TargetName="ring" Property="Opacity" Value="1"/>
+              <Setter TargetName="bg" Property="Background" Value="#2A2036"/>
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <!-- Mode card (display modes) -->
+  <Style x:Key="ModeCard" TargetType="RadioButton">
+    <Setter Property="Cursor" Value="Hand"/>
+    <Setter Property="Margin" Value="0,0,0,10"/>
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="RadioButton">
+          <Grid>
+            <Border x:Name="bg" CornerRadius="14" Padding="14,12" Background="{StaticResource CardHi}" BorderBrush="{StaticResource Line}" BorderThickness="1">
+              <ContentPresenter/>
+            </Border>
+            <Border x:Name="ring" CornerRadius="14" BorderBrush="{StaticResource GlowH}" BorderThickness="1.5" Opacity="0"/>
+          </Grid>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="bg" Property="BorderBrush" Value="#5A4A6A"/></Trigger>
+            <Trigger Property="IsChecked" Value="True">
+              <Setter TargetName="ring" Property="Opacity" Value="1"/>
+              <Setter TargetName="bg" Property="Background" Value="#241C34"/>
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <!-- Color swatch -->
+  <Style x:Key="Swatch" TargetType="RadioButton">
+    <Setter Property="Width" Value="30"/>
+    <Setter Property="Height" Value="30"/>
+    <Setter Property="Margin" Value="0,0,10,0"/>
+    <Setter Property="Cursor" Value="Hand"/>
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="RadioButton">
+          <Grid>
+            <Ellipse x:Name="ring" Stroke="{StaticResource Ink}" StrokeThickness="2" Opacity="0"/>
+            <Ellipse Margin="5" Fill="{TemplateBinding Background}"/>
+          </Grid>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="ring" Property="Opacity" Value="0.4"/></Trigger>
+            <Trigger Property="IsChecked" Value="True"><Setter TargetName="ring" Property="Opacity" Value="1"/></Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <!-- Text box -->
+  <Style x:Key="Field" TargetType="TextBox">
+    <Setter Property="Foreground" Value="{StaticResource Ink}"/>
+    <Setter Property="CaretBrush" Value="{StaticResource Ember}"/>
+    <Setter Property="SelectionBrush" Value="{StaticResource Rose}"/>
+    <Setter Property="FontFamily" Value="{StaticResource BodyFont}"/>
+    <Setter Property="FontSize" Value="13"/>
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="TextBox">
+          <Border x:Name="bg" CornerRadius="10" Background="#100E1C" BorderBrush="{StaticResource Line}" BorderThickness="1" Padding="10,7">
+            <ScrollViewer x:Name="PART_ContentHost" VerticalScrollBarVisibility="Hidden" HorizontalScrollBarVisibility="Hidden"/>
+          </Border>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="bg" Property="BorderBrush" Value="#FF8A6A"/></Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <Style x:Key="Token" TargetType="Button">
+    <Setter Property="Foreground" Value="{StaticResource Ember}"/>
+    <Setter Property="FontFamily" Value="Cascadia Mono, Consolas"/>
+    <Setter Property="FontSize" Value="11"/>
+    <Setter Property="Margin" Value="0,0,6,6"/>
+    <Setter Property="Cursor" Value="Hand"/>
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="Button">
+          <Border x:Name="bg" CornerRadius="7" Padding="8,4" Background="#1E1A33">
+            <ContentPresenter/>
+          </Border>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="bg" Property="Background" Value="#2A2448"/></Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
 </ResourceDictionary>

@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -31,6 +32,16 @@ namespace Wakelight
         Slider ShowcaseSlider, LockSlider;
         CheckBox EnabledSwitch, ClockSwitch, IconsSwitch, FullscreenSwitch, SyncSwitch, StartupSwitch;
         Button HotkeyButton, PauseButton;
+        // 1.1: tabs, displays, widgets
+        CheckBox AllMonitorsSwitch, H24Switch, SecondsSwitch, AwaySwitch, ChipSwitch, BrandSwitch, WeatherSwitch, FahrenheitSwitch;
+        RadioButton TabShowcase, TabDisplays, TabWidgets, TabSettings;
+        FrameworkElement PanelShowcase, PanelDisplays, PanelWidgets, PanelSettings, InfoLayer, WeatherOptions;
+        Viewbox WidgetPreview;
+        Canvas DisplayMap;
+        TextBlock ScreensText, ModeDescription, SizeValue, WeatherStatus;
+        TextBox CaptionBox, CityBox;
+        Slider SizeSlider;
+        System.Windows.Threading.DispatcherTimer captionDebounce;
 
         public MainWindow(Engine engine)
         {
@@ -52,6 +63,20 @@ namespace Wakelight
             IconsSwitch = Find<CheckBox>("IconsSwitch"); FullscreenSwitch = Find<CheckBox>("FullscreenSwitch");
             SyncSwitch = Find<CheckBox>("SyncSwitch"); StartupSwitch = Find<CheckBox>("StartupSwitch");
             HotkeyButton = Find<Button>("HotkeyButton"); PauseButton = Find<Button>("PauseButton");
+
+            AllMonitorsSwitch = Find<CheckBox>("AllMonitorsSwitch"); H24Switch = Find<CheckBox>("H24Switch");
+            SecondsSwitch = Find<CheckBox>("SecondsSwitch"); AwaySwitch = Find<CheckBox>("AwaySwitch");
+            ChipSwitch = Find<CheckBox>("ChipSwitch"); BrandSwitch = Find<CheckBox>("BrandSwitch");
+            WeatherSwitch = Find<CheckBox>("WeatherSwitch"); FahrenheitSwitch = Find<CheckBox>("FahrenheitSwitch");
+            TabShowcase = Find<RadioButton>("TabShowcase"); TabDisplays = Find<RadioButton>("TabDisplays");
+            TabWidgets = Find<RadioButton>("TabWidgets"); TabSettings = Find<RadioButton>("TabSettings");
+            PanelShowcase = Find<FrameworkElement>("PanelShowcase"); PanelDisplays = Find<FrameworkElement>("PanelDisplays");
+            PanelWidgets = Find<FrameworkElement>("PanelWidgets"); PanelSettings = Find<FrameworkElement>("PanelSettings");
+            InfoLayer = Find<FrameworkElement>("InfoLayer"); WeatherOptions = Find<FrameworkElement>("WeatherOptions");
+            WidgetPreview = Find<Viewbox>("WidgetPreview"); DisplayMap = Find<Canvas>("DisplayMap");
+            ScreensText = Find<TextBlock>("ScreensText"); ModeDescription = Find<TextBlock>("ModeDescription");
+            SizeValue = Find<TextBlock>("SizeValue"); WeatherStatus = Find<TextBlock>("WeatherStatus");
+            CaptionBox = Find<TextBox>("CaptionBox"); CityBox = Find<TextBox>("CityBox"); SizeSlider = Find<Slider>("SizeSlider");
 
             Logo.Source = Program.LogoImage;
             VersionText.Text = Program.Version;
@@ -78,11 +103,39 @@ namespace Wakelight
             LoadSettings();
             ShowcaseSlider.ValueChanged += (s, e) => OnSettingChanged();
             LockSlider.ValueChanged += (s, e) => OnSettingChanged();
-            foreach (var cb in new[] { EnabledSwitch, ClockSwitch, IconsSwitch, FullscreenSwitch, SyncSwitch, StartupSwitch })
+            SizeSlider.ValueChanged += (s, e) => OnSettingChanged();
+            foreach (var cb in new[] { EnabledSwitch, ClockSwitch, IconsSwitch, FullscreenSwitch, SyncSwitch, StartupSwitch,
+                                       AllMonitorsSwitch, H24Switch, SecondsSwitch, AwaySwitch, ChipSwitch, BrandSwitch, WeatherSwitch, FahrenheitSwitch })
             {
                 cb.Checked += (s, e) => OnSettingChanged();
                 cb.Unchecked += (s, e) => OnSettingChanged();
             }
+            foreach (var group in new[] { "ClockStyles", "Positions", "Accents" })
+                foreach (var rb in ((Panel)Window.FindName(group)).Children.OfType<RadioButton>())
+                    rb.Checked += (s, e) => OnSettingChanged();
+            foreach (var name in DisplayLayout.Modes)
+                Find<RadioButton>("Mode" + char.ToUpper(name[0]) + name.Substring(1)).Checked += (s, e) => OnSettingChanged();
+
+            foreach (var t in new[] { TabShowcase, TabDisplays, TabWidgets, TabSettings })
+                t.Checked += (s, e) => ShowTab();
+
+            captionDebounce = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(400) };
+            captionDebounce.Tick += (s, e) => { captionDebounce.Stop(); OnSettingChanged(); };
+            CaptionBox.TextChanged += (s, e) => { if (!loading) { captionDebounce.Stop(); captionDebounce.Start(); RefreshWidgetPreview(); } };
+            foreach (var b in ((Panel)Window.FindName("Tokens")).Children.OfType<Button>())
+                b.Click += (s, e) =>
+                {
+                    string tok = (string)((Button)s).Content;
+                    int at = CaptionBox.CaretIndex;
+                    CaptionBox.Text = CaptionBox.Text.Insert(at, tok);
+                    CaptionBox.CaretIndex = at + tok.Length;
+                    CaptionBox.Focus();
+                };
+            Find<Button>("CityButton").Click += (s, e) => SaveCity();
+            CityBox.KeyDown += (s, e) => { if (e.Key == Key.Enter) SaveCity(); };
+            Weather.Updated += () => { UpdateWeatherStatus(); RefreshWidgetPreview(); };
+            DisplayMap.SizeChanged += (s, e) => DrawDisplayMap();
+            Microsoft.Win32.SystemEvents.DisplaySettingsChanged += (s, e) => Window.Dispatcher.BeginInvoke(new Action(DrawDisplayMap));
 
             engine.Changed += () => { if (Window.IsVisible) Refresh(); };
             engine.WallpaperChanged += () => { shownPreviewFor = null; if (Window.IsVisible) Refresh(); };
@@ -110,8 +163,160 @@ namespace Wakelight
             SyncSwitch.IsChecked = st.SyncLockScreen;
             StartupSwitch.IsChecked = st.StartWithWindows;
             HotkeyButton.Content = Engine.HotkeyText(st.HotkeyModifiers, st.HotkeyKey);
+
+            AllMonitorsSwitch.IsChecked = st.WidgetsOnAllMonitors;
+            H24Switch.IsChecked = st.Clock24h; SecondsSwitch.IsChecked = st.ClockSeconds;
+            AwaySwitch.IsChecked = st.ShowAway; ChipSwitch.IsChecked = st.ShowWallpaperChip; BrandSwitch.IsChecked = st.ShowBrand;
+            WeatherSwitch.IsChecked = st.ShowWeather; FahrenheitSwitch.IsChecked = st.WeatherFahrenheit;
+            CaptionBox.Text = st.Caption; CityBox.Text = st.WeatherCity; SizeSlider.Value = st.WidgetScale;
+            Select("ClockStyles", st.ClockStyle); Select("Positions", st.WidgetPosition); Select("Accents", st.Accent);
+            var mode = Find<RadioButton>("Mode" + char.ToUpper(st.DisplayMode[0]) + st.DisplayMode.Substring(1));
+            if (mode != null) mode.IsChecked = true;
             loading = false;
             UpdateLabels();
+            UpdateWeatherStatus();
+        }
+
+        void Select(string group, string tag)
+        {
+            foreach (var rb in ((Panel)Window.FindName(group)).Children.OfType<RadioButton>())
+                rb.IsChecked = (string)rb.Tag == tag;
+        }
+
+        string Selected(string group, string fallback)
+        {
+            var rb = ((Panel)Window.FindName(group)).Children.OfType<RadioButton>().FirstOrDefault(r => r.IsChecked == true);
+            return rb == null ? fallback : (string)rb.Tag;
+        }
+
+        void SaveCity()
+        {
+            engine.Settings.WeatherCity = CityBox.Text.Trim();
+            if (engine.Settings.WeatherCity.Length > 0) engine.Settings.ShowWeather = true;
+            loading = true; WeatherSwitch.IsChecked = engine.Settings.ShowWeather; loading = false;
+            engine.SaveSettings();
+            WeatherStatus.Text = "Looking up the weather…";
+            Weather.Refresh(engine.Settings, true);
+        }
+
+        void UpdateWeatherStatus()
+        {
+            WeatherOptions.Visibility = WeatherSwitch.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+            var w = Weather.Current;
+            if (w != null && engine.Settings.ShowWeather)
+                WeatherStatus.Text = w.Place + ": " + w.Temperature.ToString("0") + "° " + w.Summary.ToLowerInvariant() + " · updated " + w.Fetched.ToString("HH:mm");
+            else if (engine.Settings.ShowWeather && engine.Settings.WeatherCity.Length > 0)
+                WeatherStatus.Text = "Couldn't find weather for “" + engine.Settings.WeatherCity + "” yet. Check the spelling or your connection.";
+        }
+
+        // ------------------------------------------------------------- tabs
+        void ShowTab()
+        {
+            PanelShowcase.Visibility = TabShowcase.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+            PanelDisplays.Visibility = TabDisplays.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+            PanelWidgets.Visibility = TabWidgets.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+            PanelSettings.Visibility = TabSettings.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+            bool widgets = TabWidgets.IsChecked == true;
+            WidgetPreview.Visibility = widgets ? Visibility.Visible : Visibility.Collapsed;
+            InfoLayer.Visibility = widgets ? Visibility.Collapsed : Visibility.Visible;
+            ((ScrollViewer)Window.FindName("PanelScroll")).ScrollToTop();
+            if (widgets) RefreshWidgetPreview();
+            if (TabDisplays.IsChecked == true) DrawDisplayMap();
+        }
+
+        void RefreshWidgetPreview()
+        {
+            if (WidgetPreview.Visibility != Visibility.Visible) return;
+            var old = WidgetPreview.Child as WidgetLayer;
+            if (old != null) old.Stop();
+            var st = engine.Settings;
+            // preview reflects unsaved caption text immediately
+            string savedCaption = st.Caption;
+            st.Caption = CaptionBox.Text;
+            WidgetPreview.Child = st.ShowClock ? new WidgetLayer(st, engine.Wallpaper, () => Math.Max(engine.IdleSeconds, 754)) : null;
+            st.Caption = savedCaption;
+        }
+
+        // ------------------------------------------------------- display map
+        void DrawDisplayMap()
+        {
+            if (DisplayMap == null || DisplayMap.ActualWidth <= 0) return;
+            DisplayMap.Children.Clear();
+            var screens = DisplayLayout.Screens();
+            var virt = DisplayLayout.Union(screens);
+            string mode = engine.Settings.DisplayMode;
+            ScreensText.Text = screens.Count == 1 ? "1 display" : screens.Count + " displays";
+            ModeDescription.Text = DisplayLayout.Description(mode);
+
+            double scale = Math.Min(DisplayMap.ActualWidth / virt.Width, DisplayMap.ActualHeight / virt.Height);
+            double offX = (DisplayMap.ActualWidth - virt.Width * scale) / 2, offY = (DisplayMap.ActualHeight - virt.Height * scale) / 2;
+            var img = MapImage();
+            double aspect = img == null ? 16.0 / 9 : img.Width / img.Height;
+
+            foreach (var s in screens)
+            {
+                double x = offX + (s.Bounds.Left - virt.Left) * scale, y = offY + (s.Bounds.Top - virt.Top) * scale;
+                double w = s.Bounds.Width * scale - 6, h = s.Bounds.Height * scale - 6;
+                var part = DisplayLayout.SourceFor(mode, s, virt, aspect);
+                Brush fill;
+                if (img != null && (part != null || s.Primary))
+                    fill = new ImageBrush(img)
+                    {
+                        Viewbox = part ?? DisplayLayout.Cover(aspect, (double)s.Bounds.Width / s.Bounds.Height),
+                        ViewboxUnits = BrushMappingMode.RelativeToBoundingBox, Stretch = Stretch.Fill
+                    };
+                else fill = new SolidColorBrush(Color.FromRgb(0x1C, 0x19, 0x30));
+
+                var g = new Grid { Width = w, Height = h };
+                g.Children.Add(new Border { CornerRadius = new CornerRadius(6), Background = fill, Opacity = DisplayLayout.OpacityFor(mode, s) / 255.0 + (mode == "spotlight" && !s.Primary ? 0.1 : 0) });
+                g.Children.Add(new Border
+                {
+                    CornerRadius = new CornerRadius(6), BorderThickness = new Thickness(s.Primary ? 2 : 1),
+                    BorderBrush = s.Primary ? (Brush)Application.Current.Resources["GlowH"] : new SolidColorBrush(Color.FromArgb(90, 255, 255, 255))
+                });
+                var label = new Border
+                {
+                    CornerRadius = new CornerRadius(6), Padding = new Thickness(6, 2, 6, 2), Margin = new Thickness(6),
+                    HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Bottom,
+                    Background = new SolidColorBrush(Color.FromArgb(200, 11, 10, 20)),
+                    Child = new TextBlock
+                    {
+                        Text = (s.Primary ? "Main · " : "") + s.Bounds.Width + "×" + s.Bounds.Height, FontSize = 10,
+                        FontWeight = FontWeights.SemiBold, Foreground = new SolidColorBrush(Color.FromRgb(0xF4, 0xEE, 0xE6))
+                    }
+                };
+                g.Children.Add(label);
+                if (part == null && !s.Primary)
+                    g.Children.Add(new TextBlock
+                    {
+                        Text = "Wallpaper Engine's own", FontSize = 10, Foreground = (Brush)Application.Current.Resources["Sub"],
+                        HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center
+                    });
+                Canvas.SetLeft(g, x + 3); Canvas.SetTop(g, y + 3);
+                DisplayMap.Children.Add(g);
+            }
+        }
+
+        /// <summary>Best still of the current wallpaper: latest lock screen capture, else its preview.</summary>
+        System.Windows.Media.Imaging.BitmapSource MapImage()
+        {
+            try
+            {
+                string path = null;
+                var dir = new DirectoryInfo(LockScreen.Folder);
+                if (dir.Exists && !Demo.On)
+                {
+                    var f = dir.GetFiles("lock_*.jpg").OrderByDescending(x => x.LastWriteTime).FirstOrDefault();
+                    if (f != null) path = f.FullName;
+                }
+                if (path == null && engine.Wallpaper != null) path = engine.Wallpaper.PreviewPath;
+                if (path == null) return null;
+                var b = new System.Windows.Media.Imaging.BitmapImage();
+                b.BeginInit(); b.UriSource = new Uri(path); b.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
+                b.DecodePixelWidth = 640; b.EndInit(); b.Freeze();
+                return b;
+            }
+            catch { return null; }
         }
 
         void OnSettingChanged()
@@ -127,11 +332,27 @@ namespace Wakelight
             st.SkipFullscreenApps = FullscreenSwitch.IsChecked == true;
             st.SyncLockScreen = SyncSwitch.IsChecked == true;
             st.StartWithWindows = StartupSwitch.IsChecked == true;
+
+            st.WidgetsOnAllMonitors = AllMonitorsSwitch.IsChecked == true;
+            st.Clock24h = H24Switch.IsChecked == true; st.ClockSeconds = SecondsSwitch.IsChecked == true;
+            st.ShowAway = AwaySwitch.IsChecked == true; st.ShowWallpaperChip = ChipSwitch.IsChecked == true;
+            st.ShowBrand = BrandSwitch.IsChecked == true; st.ShowWeather = WeatherSwitch.IsChecked == true;
+            st.WeatherFahrenheit = FahrenheitSwitch.IsChecked == true;
+            st.Caption = CaptionBox.Text; st.WidgetScale = SizeSlider.Value;
+            st.ClockStyle = Selected("ClockStyles", "classic");
+            st.WidgetPosition = Selected("Positions", "bottomleft");
+            st.Accent = Selected("Accents", "ember");
+            foreach (var name in DisplayLayout.Modes)
+                if (Find<RadioButton>("Mode" + char.ToUpper(name[0]) + name.Substring(1)).IsChecked == true) st.DisplayMode = name;
             engine.SaveSettings();
+            UpdateWeatherStatus();
+            RefreshWidgetPreview();
+            DrawDisplayMap();
         }
 
         void UpdateLabels()
         {
+            if (SizeValue != null) SizeValue.Text = Math.Round(SizeSlider.Value * 100) + "%";
             ShowcaseValue.Text = Minutes(ShowcaseSlider.Value);
             LockValue.Text = LockSlider.Value <= 0 ? "Never" : Minutes(LockSlider.Value);
             DrawTimeline();

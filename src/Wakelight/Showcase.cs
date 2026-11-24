@@ -23,35 +23,41 @@ namespace Wakelight
         public event Action<string> Closed;            // reason
         public event Action<string> SnapshotTaken;     // jpg path
 
-        readonly bool showClock;
-        readonly bool hideIcons;
+        readonly Settings settings;
+        readonly bool showWidgets;
+        readonly Func<double> awaySeconds;
         readonly string snapshotPath;
         readonly List<Window> windows = new List<Window>();
         readonly List<IntPtr> thumbs = new List<IntPtr>();
+        readonly List<WidgetLayer> layers = new List<WidgetLayer>();
         DateTime shownAt;
         Point? firstMouse;
         bool closing;
         IntPtr iconsHwnd = IntPtr.Zero;
-        DispatcherTimer clockTimer;
 
         public bool IsOpen { get { return windows.Count > 0 && !closing; } }
 
-        public Showcase(bool showClock, bool hideIcons, string snapshotPath)
+        public Showcase(Settings settings, bool showWidgets, string snapshotPath, Func<double> awaySeconds)
         {
-            this.showClock = showClock;
-            this.hideIcons = hideIcons;
+            this.settings = settings;
+            this.showWidgets = showWidgets;
             this.snapshotPath = snapshotPath;
+            this.awaySeconds = awaySeconds ?? (() => 0);
         }
 
-        public bool Open(WallpaperInfo fallback)
+        public bool Open(WallpaperInfo wallpaper)
         {
             shownAt = DateTime.Now;
             IntPtr host = WallpaperEngine.FindRenderHost();
-            Log.Write("showcase open, render host=" + host);
-            if (host != IntPtr.Zero && hideIcons) HideIcons(host);
+            string mode = settings.DisplayMode ?? "span";
+            var screens = DisplayLayout.Screens();
+            var virt = DisplayLayout.Union(screens);
+            var primary = screens.FirstOrDefault(x => x.Primary) ?? screens[0];
+            Log.Write("showcase open, render host=" + host + ", mode=" + mode + ", screens=" + screens.Count);
+            if (host != IntPtr.Zero && settings.HideDesktopIcons) HideIcons(host);
 
             double scale = Dpi();
-            foreach (var screen in Forms.Screen.AllScreens)
+            foreach (var screen in screens)
             {
                 var b = screen.Bounds;
                 var w = new Window
@@ -66,13 +72,13 @@ namespace Wakelight
                     Left = b.Left / scale, Top = b.Top / scale, Width = b.Width / scale, Height = b.Height / scale,
                     Title = "Wakelight Showcase"
                 };
-                var bounds = b;
+                var sc = screen;
                 if (host != IntPtr.Zero)
                 {
                     w.Content = new Grid();
-                    w.ContentRendered += (s, e) => Attach((Window)s, host, bounds);
+                    w.ContentRendered += (s, e) => Attach((Window)s, host, sc, primary, virt, mode);
                 }
-                else w.Content = FallbackContent(fallback);
+                else w.Content = FallbackContent(wallpaper, mode, sc, virt, b.Width / scale, b.Height / scale);
                 w.SourceInitialized += (s, e) => ((Window)s).WindowState = WindowState.Maximized;
                 w.KeyDown += (s, e) => { if (Armed()) Close("key"); };
                 w.MouseDown += (s, e) => { if (Armed()) Close("click"); };
@@ -83,13 +89,14 @@ namespace Wakelight
                     if (firstMouse == null || !Armed()) { firstMouse = p; return; }
                     if (Math.Abs(p.X - firstMouse.Value.X) > 14 || Math.Abs(p.Y - firstMouse.Value.Y) > 14) Close("mouse");
                 };
-                w.Deactivated += (s, e) => { if (Armed() && windows.Count == 1) ((Window)s).Activate(); };
+                w.Tag = screen;
                 windows.Add(w);
                 w.Show();
             }
-            if (windows.Count > 0) windows[0].Activate();
+            var main = windows.FirstOrDefault(x => ((DisplayLayout.ScreenInfo)x.Tag).Primary) ?? windows[0];
+            main.Activate();
 
-            // Take a sharp still for the lock screen while nothing covers the scene, then add the clock.
+            // Take a sharp still for the lock screen while nothing covers the scene, then add the widgets.
             After(900, () =>
             {
                 if (closing) return;
@@ -98,7 +105,10 @@ namespace Wakelight
                     try { Capture(snapshotPath); if (SnapshotTaken != null) SnapshotTaken(snapshotPath); }
                     catch (Exception ex) { Log.Write("snapshot failed: " + ex.Message); }
                 }
-                if (showClock) foreach (var w in windows.ToList()) AddClock(w);
+                if (showWidgets)
+                    foreach (var w in windows.ToList())
+                        if (settings.WidgetsOnAllMonitors || ((DisplayLayout.ScreenInfo)w.Tag).Primary)
+                            AddWidgets(w, wallpaper);
             });
             return host != IntPtr.Zero;
         }
@@ -110,7 +120,7 @@ namespace Wakelight
             if (closing) return;
             closing = true;
             Log.Write("showcase close: " + reason + " after " + (DateTime.Now - shownAt).TotalSeconds.ToString("0") + "s");
-            if (clockTimer != null) clockTimer.Stop();
+            foreach (var l in layers) l.Stop();
             foreach (var t in thumbs) Native.DwmUnregisterThumbnail(t);
             thumbs.Clear();
             foreach (var w in windows.ToList()) { try { w.Close(); } catch { } }
@@ -120,7 +130,8 @@ namespace Wakelight
         }
 
         // ------------------------------------------------------------------
-        void Attach(Window w, IntPtr host, System.Drawing.Rectangle screen)
+        void Attach(Window w, IntPtr host, DisplayLayout.ScreenInfo screen, DisplayLayout.ScreenInfo primary,
+                    System.Drawing.Rectangle virt, string mode)
         {
             IntPtr hwnd = new WindowInteropHelper(w).Handle;
             IntPtr thumb;
@@ -128,88 +139,79 @@ namespace Wakelight
             thumbs.Add(thumb);
             Native.RECT src; Native.GetWindowRect(host, out src);
             Native.RECT client; Native.GetClientRect(hwnd, out client);
+
+            var sb = screen.Bounds; var pb = primary.Bounds;
+            Native.RECT rs;
+            Rect? part = DisplayLayout.SourceFor(mode, screen, virt, (double)pb.Width / pb.Height);
+            if (part == null)
+                rs = new Native.RECT { Left = sb.Left - src.Left, Top = sb.Top - src.Top, Right = sb.Right - src.Left, Bottom = sb.Bottom - src.Top };
+            else
+            {
+                var r = part.Value;
+                int ox = pb.Left - src.Left, oy = pb.Top - src.Top;
+                rs = new Native.RECT
+                {
+                    Left = ox + (int)Math.Round(r.Left * pb.Width), Top = oy + (int)Math.Round(r.Top * pb.Height),
+                    Right = ox + (int)Math.Round(r.Right * pb.Width), Bottom = oy + (int)Math.Round(r.Bottom * pb.Height)
+                };
+            }
+
             var p = new Native.DWM_THUMBNAIL_PROPERTIES();
             p.dwFlags = Native.DWM_TNP_RECTDESTINATION | Native.DWM_TNP_RECTSOURCE | Native.DWM_TNP_OPACITY |
                         Native.DWM_TNP_VISIBLE | Native.DWM_TNP_SOURCECLIENTAREAONLY;
             p.rcDestination = client;
-            p.rcSource = new Native.RECT
-            {
-                Left = screen.Left - src.Left, Top = screen.Top - src.Top,
-                Right = screen.Right - src.Left, Bottom = screen.Bottom - src.Top
-            };
-            p.opacity = 255; p.fVisible = 1; p.fSourceClientAreaOnly = 0;
+            p.rcSource = rs;
+            p.opacity = DisplayLayout.OpacityFor(mode, screen); p.fVisible = 1; p.fSourceClientAreaOnly = 0;
             Native.DwmUpdateThumbnailProperties(thumb, ref p);
         }
 
-        void AddClock(Window owner)
+        void AddWidgets(Window owner, WallpaperInfo wallpaper)
         {
-            var time = new TextBlock
-            {
-                FontFamily = new FontFamily("Segoe UI Variable Display, Segoe UI Light"),
-                FontWeight = FontWeights.Light, FontSize = 128, Foreground = Brushes.White
-            };
-            var date = new TextBlock
-            {
-                FontFamily = new FontFamily("Segoe UI Variable Display, Segoe UI"),
-                FontSize = 30, Foreground = new SolidColorBrush(Color.FromArgb(230, 255, 241, 226)),
-                Margin = new Thickness(6, -8, 0, 0)
-            };
-            var mark = new TextBlock
-            {
-                Text = "WAKELIGHT", FontFamily = new FontFamily("Segoe UI Variable Text, Segoe UI"),
-                FontSize = 12, FontWeight = FontWeights.SemiBold, Margin = new Thickness(8, 18, 0, 0),
-                Foreground = new SolidColorBrush(Color.FromArgb(150, 255, 196, 107))
-            };
-            var stack = new StackPanel
-            {
-                HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Bottom,
-                Margin = new Thickness(72, 0, 0, 64),
-                Effect = new DropShadowEffect { BlurRadius = 24, ShadowDepth = 0, Opacity = 0.55, Color = Colors.Black }
-            };
-            stack.Children.Add(time); stack.Children.Add(date); stack.Children.Add(mark);
-
-            Action tick = () =>
-            {
-                time.Text = DateTime.Now.ToString("HH:mm");
-                date.Text = DateTime.Now.ToString("dddd, d MMMM");
-            };
-            tick();
-            if (clockTimer == null)
-            {
-                clockTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
-                clockTimer.Start();
-            }
-            clockTimer.Tick += (s, e) => tick();
-
+            var layer = new WidgetLayer(settings, wallpaper, awaySeconds);
+            layers.Add(layer);
             var overlay = new Window
             {
                 Owner = owner, WindowStyle = WindowStyle.None, AllowsTransparency = true,
                 Background = Brushes.Transparent, ShowInTaskbar = false, Topmost = true, ShowActivated = false,
                 ResizeMode = ResizeMode.NoResize, IsHitTestVisible = false, Focusable = false,
                 Left = owner.Left, Top = owner.Top, Width = owner.ActualWidth, Height = owner.ActualHeight,
-                Content = stack, Opacity = 0, Cursor = Cursors.None
+                Content = new Viewbox { Stretch = Stretch.Uniform, Child = layer }, Opacity = 0, Cursor = Cursors.None
             };
             overlay.Show();
             overlay.BeginAnimation(UIElement.OpacityProperty, new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(900)));
             windows.Add(overlay);
         }
 
-        static UIElement FallbackContent(WallpaperInfo info)
+        /// <summary>No live render available: show the video / preview image laid out like the live mode.</summary>
+        static UIElement FallbackContent(WallpaperInfo info, string mode, DisplayLayout.ScreenInfo screen,
+                                         System.Drawing.Rectangle virt, double w, double h)
         {
+            FrameworkElement media;
             if (info != null && info.VideoPath != null)
             {
                 var me = new MediaElement
                 {
                     Source = new Uri(info.VideoPath), LoadedBehavior = MediaState.Manual, UnloadedBehavior = MediaState.Manual,
-                    IsMuted = true, Stretch = Stretch.UniformToFill
+                    IsMuted = true, Stretch = Stretch.Fill
                 };
                 me.MediaEnded += (s, e) => { me.Position = TimeSpan.Zero; me.Play(); };
                 me.Loaded += (s, e) => me.Play();
-                return me;
+                media = me;
             }
-            var img = new Image { Stretch = Stretch.UniformToFill };
-            if (info != null && info.PreviewPath != null) Media.SetAnimatedSource(img, info.PreviewPath);
-            return img;
+            else
+            {
+                var img = new Image { Stretch = Stretch.Fill };
+                if (info != null && info.PreviewPath != null) Media.SetAnimatedSource(img, info.PreviewPath);
+                media = img;
+            }
+            double aspect = 16.0 / 9;
+            var part = DisplayLayout.SourceFor(mode == "native" ? "mirror" : mode, screen, virt, aspect) ?? new Rect(0, 0, 1, 1);
+            media.Width = w / part.Width; media.Height = h / part.Height;
+            media.HorizontalAlignment = HorizontalAlignment.Left; media.VerticalAlignment = VerticalAlignment.Top;
+            media.Margin = new Thickness(-part.X * media.Width, -part.Y * media.Height, 0, 0);
+            var g = new Grid { ClipToBounds = true, Opacity = DisplayLayout.OpacityFor(mode, screen) / 255.0 };
+            g.Children.Add(media);
+            return g;
         }
 
         // Desktop icons are drawn above the render inside Progman: hide them while showing.

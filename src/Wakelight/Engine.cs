@@ -64,6 +64,7 @@ namespace Wakelight
         public void SaveSettings()
         {
             Settings.Save();
+            Weather.Refresh(Settings, false);
             ApplyStartup();
             RegisterHotkey();
             lastFolderProbe = DateTime.MinValue;
@@ -97,7 +98,7 @@ namespace Wakelight
         public void RefreshLockScreenNow()
         {
             if (showcase != null) return;
-            var sc = new Showcase(false, Settings.HideDesktopIcons, LockScreen.NewSnapshotPath());
+            var sc = new Showcase(Settings, false, LockScreen.NewSnapshotPath(), null);
             sc.SnapshotTaken += p => { LockScreen.Apply(p); snapshotForCurrent = true; sc.Close("snapshot"); };
             sc.Closed += r => { if (showcase == sc) showcase = null; };
             showcase = sc;
@@ -109,6 +110,7 @@ namespace Wakelight
         {
             IdleSeconds = Native.IdleSeconds();
             TrackWallpaper();
+            Weather.Refresh(Settings, false);
 
             if (showcase != null) State = EngineState.Showing;
             else if (!Settings.Enabled) State = EngineState.Disabled;
@@ -148,7 +150,7 @@ namespace Wakelight
             idleAtShow = idle;
             shownAt = DateTime.Now;
             string snap = Settings.SyncLockScreen && LockScreenPermission && !snapshotForCurrent ? LockScreen.NewSnapshotPath() : null;
-            var sc = new Showcase(Settings.ShowClock, Settings.HideDesktopIcons, snap);
+            var sc = new Showcase(Settings, Settings.ShowClock, snap, () => idleAtShow + (DateTime.Now - shownAt).TotalSeconds);
             sc.SnapshotTaken += p => { if (LockScreen.Apply(p)) snapshotForCurrent = true; };
             sc.Closed += OnShowcaseClosed;
             showcase = sc;

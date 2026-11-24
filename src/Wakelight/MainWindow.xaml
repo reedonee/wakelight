@@ -57,11 +57,13 @@
           <Grid x:Name="PreviewHost">
             <Image x:Name="PreviewImage" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality"/>
             <MediaElement x:Name="PreviewVideo" Stretch="UniformToFill" IsMuted="True" LoadedBehavior="Manual" UnloadedBehavior="Manual" Visibility="Collapsed"/>
+            <Viewbox x:Name="WidgetPreview" Stretch="UniformToFill" Visibility="Collapsed" IsHitTestVisible="False"/>
             <StackPanel x:Name="EmptyState" VerticalAlignment="Center" HorizontalAlignment="Center" Visibility="Collapsed">
               <TextBlock Style="{StaticResource H2}" HorizontalAlignment="Center" Text="Wallpaper Engine not found"/>
               <TextBlock Style="{StaticResource Hint}" HorizontalAlignment="Center" Margin="0,6,0,0" TextAlignment="Center" MaxWidth="320"
-                         Text="Start Wallpaper Engine, or point Wakelight to its folder in General below."/>
+                         Text="Start Wallpaper Engine, or point Wakelight to its folder in the Settings tab."/>
             </StackPanel>
+            <Grid x:Name="InfoLayer">
             <!-- bottom fade with title -->
             <Border VerticalAlignment="Bottom" Height="130" IsHitTestVisible="False">
               <Border.Background>
@@ -82,6 +84,7 @@
               <TextBlock x:Name="WallpaperTitle" Text="—" Margin="0,8,0,0" FontFamily="{StaticResource Display}" FontSize="22"
                          FontWeight="SemiBold" Foreground="{StaticResource Ink}" TextTrimming="CharacterEllipsis"/>
             </StackPanel>
+            </Grid>
             <!-- status pill -->
             <Border HorizontalAlignment="Left" VerticalAlignment="Top" Margin="16" CornerRadius="14" Padding="12,6" Background="#CC0B0A14"
                     BorderBrush="#33FFFFFF" BorderThickness="1">
@@ -123,85 +126,259 @@
       </Grid>
 
       <!-- ===================== right: settings ===================== -->
-      <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto" Padding="0,0,8,0">
-        <StackPanel>
-          <Border Style="{StaticResource CardBox}">
-            <StackPanel>
-              <Grid>
-                <TextBlock Style="{StaticResource H2}" Text="Wakelight"/>
-                <CheckBox x:Name="EnabledSwitch" Style="{StaticResource Switch}" HorizontalAlignment="Right"/>
-              </Grid>
-              <TextBlock Style="{StaticResource Hint}" Margin="0,4,0,0" Text="Turn the idle showcase and auto-lock on or off."/>
-            </StackPanel>
-          </Border>
+      <Grid Grid.Column="2">
+        <Grid.RowDefinitions>
+          <RowDefinition Height="Auto"/>
+          <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
 
-          <Border Style="{StaticResource CardBox}">
-            <StackPanel>
-              <TextBlock Style="{StaticResource Eyebrow}" Text="TIMING"/>
-              <Grid Margin="0,14,0,0">
-                <TextBlock Style="{StaticResource Body}" Text="Showcase after"/>
-                <TextBlock x:Name="ShowcaseValue" HorizontalAlignment="Right" Style="{StaticResource H2}" Foreground="{StaticResource Ember}" Text="5 min"/>
-              </Grid>
-              <Slider x:Name="ShowcaseSlider" Style="{StaticResource Range}" Minimum="1" Maximum="60" SmallChange="1" LargeChange="5"
-                      IsSnapToTickEnabled="True" TickFrequency="1" Margin="0,6,0,0"/>
-              <Grid Margin="0,14,0,0">
-                <TextBlock Style="{StaticResource Body}" Text="Lock when I return after"/>
-                <TextBlock x:Name="LockValue" HorizontalAlignment="Right" Style="{StaticResource H2}" Foreground="{StaticResource Rose}" Text="10 min"/>
-              </Grid>
-              <Slider x:Name="LockSlider" Style="{StaticResource Range}" Minimum="0" Maximum="120" SmallChange="1" LargeChange="5"
-                      IsSnapToTickEnabled="True" TickFrequency="1" Margin="0,6,0,0"/>
-              <TextBlock Style="{StaticResource Hint}" Margin="0,8,0,0"
-                         Text="The showcase keeps playing until you move the mouse or press a key. Back after the lock time? You'll land on the sign-in screen. Drag to 0 to never lock."/>
-            </StackPanel>
-          </Border>
+        <Border CornerRadius="13" Background="#14121F" BorderBrush="{StaticResource Line}" BorderThickness="1" Padding="4" Margin="0,0,8,14">
+          <UniformGrid Rows="1">
+            <RadioButton x:Name="TabShowcase" Style="{StaticResource Tab}" GroupName="tabs" IsChecked="True" Content="Showcase"/>
+            <RadioButton x:Name="TabDisplays" Style="{StaticResource Tab}" GroupName="tabs" Content="Displays"/>
+            <RadioButton x:Name="TabWidgets" Style="{StaticResource Tab}" GroupName="tabs" Content="Widgets"/>
+            <RadioButton x:Name="TabSettings" Style="{StaticResource Tab}" GroupName="tabs" Content="Settings"/>
+          </UniformGrid>
+        </Border>
 
-          <Border Style="{StaticResource CardBox}">
-            <StackPanel>
-              <TextBlock Style="{StaticResource Eyebrow}" Text="SHOWCASE"/>
-              <CheckBox x:Name="ClockSwitch" Style="{StaticResource Switch}" Margin="0,14,0,0" Content="Show clock and date"/>
-              <CheckBox x:Name="IconsSwitch" Style="{StaticResource Switch}" Margin="0,14,0,0" Content="Hide desktop icons while showing"/>
-              <CheckBox x:Name="FullscreenSwitch" Style="{StaticResource Switch}" Margin="0,14,0,0" Content="Wait while a full-screen app is open"/>
-              <Grid Margin="0,16,0,0">
+        <ScrollViewer x:Name="PanelScroll" Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="0,0,8,0">
+          <Grid>
+            <!-- ======================= SHOWCASE ======================= -->
+            <StackPanel x:Name="PanelShowcase">
+              <Border Style="{StaticResource CardBox}">
                 <StackPanel>
-                  <TextBlock Style="{StaticResource Body}" Text="Showcase-and-lock hotkey"/>
-                  <TextBlock x:Name="HotkeyHint" Style="{StaticResource Hint}" Text="Shows the wallpaper now, locks when you return."/>
+                  <Grid>
+                    <TextBlock Style="{StaticResource H2}" Text="Wakelight"/>
+                    <CheckBox x:Name="EnabledSwitch" Style="{StaticResource Switch}" HorizontalAlignment="Right"/>
+                  </Grid>
+                  <TextBlock Style="{StaticResource Hint}" Margin="0,4,0,0" Text="Turn the idle showcase and auto-lock on or off."/>
                 </StackPanel>
-                <Button x:Name="HotkeyButton" HorizontalAlignment="Right" VerticalAlignment="Center" Style="{StaticResource Ghost}" Padding="12,7" Content="Ctrl + Alt + L"/>
-              </Grid>
-            </StackPanel>
-          </Border>
+              </Border>
 
-          <Border Style="{StaticResource CardBox}">
-            <StackPanel>
-              <TextBlock Style="{StaticResource Eyebrow}" Text="LOCK SCREEN"/>
-              <CheckBox x:Name="SyncSwitch" Style="{StaticResource Switch}" Margin="0,14,0,0" Content="Match the lock screen to my wallpaper"/>
-              <Grid Margin="0,10,0,0">
-                <TextBlock x:Name="SyncStatus" Style="{StaticResource Hint}" Margin="0,0,110,0" Text="A sharp still is captured during each showcase."/>
-                <Button x:Name="RefreshLockButton" Style="{StaticResource Link}" HorizontalAlignment="Right" VerticalAlignment="Top" Content="Refresh now"/>
-              </Grid>
-            </StackPanel>
-          </Border>
+              <Border Style="{StaticResource CardBox}">
+                <StackPanel>
+                  <TextBlock Style="{StaticResource Eyebrow}" Text="TIMING"/>
+                  <Grid Margin="0,14,0,0">
+                    <TextBlock Style="{StaticResource Body}" Text="Showcase after"/>
+                    <TextBlock x:Name="ShowcaseValue" HorizontalAlignment="Right" Style="{StaticResource H2}" Foreground="{StaticResource Ember}" Text="5 min"/>
+                  </Grid>
+                  <Slider x:Name="ShowcaseSlider" Style="{StaticResource Range}" Minimum="1" Maximum="60" SmallChange="1" LargeChange="5"
+                          IsSnapToTickEnabled="True" TickFrequency="1" Margin="0,6,0,0"/>
+                  <Grid Margin="0,14,0,0">
+                    <TextBlock Style="{StaticResource Body}" Text="Lock when I return after"/>
+                    <TextBlock x:Name="LockValue" HorizontalAlignment="Right" Style="{StaticResource H2}" Foreground="{StaticResource Rose}" Text="10 min"/>
+                  </Grid>
+                  <Slider x:Name="LockSlider" Style="{StaticResource Range}" Minimum="0" Maximum="120" SmallChange="1" LargeChange="5"
+                          IsSnapToTickEnabled="True" TickFrequency="1" Margin="0,6,0,0"/>
+                  <TextBlock Style="{StaticResource Hint}" Margin="0,8,0,0"
+                             Text="The showcase keeps playing until you move the mouse or press a key. Back after the lock time? You'll land on the sign-in screen. Drag to 0 to never lock."/>
+                </StackPanel>
+              </Border>
 
-          <Border Style="{StaticResource CardBox}">
-            <StackPanel>
-              <TextBlock Style="{StaticResource Eyebrow}" Text="GENERAL"/>
-              <CheckBox x:Name="StartupSwitch" Style="{StaticResource Switch}" Margin="0,14,0,0" Content="Start with Windows"/>
-              <TextBlock Style="{StaticResource Body}" Margin="0,16,0,0" Text="Wallpaper Engine folder"/>
-              <Grid Margin="0,4,0,0">
-                <TextBlock x:Name="FolderText" Style="{StaticResource Hint}" Margin="0,0,70,0" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" Text="Detecting…"/>
-                <Button x:Name="FolderButton" Style="{StaticResource Link}" HorizontalAlignment="Right" Content="Change"/>
-              </Grid>
-              <Grid Margin="0,14,0,0">
-                <Button x:Name="LogButton" Style="{StaticResource Link}" HorizontalAlignment="Left" Content="Open activity log"/>
-                <Button x:Name="QuitButton" Style="{StaticResource Link}" HorizontalAlignment="Right" Foreground="{StaticResource Sub}" Content="Quit Wakelight"/>
-              </Grid>
+              <Border Style="{StaticResource CardBox}">
+                <StackPanel>
+                  <TextBlock Style="{StaticResource Eyebrow}" Text="BEHAVIOUR"/>
+                  <CheckBox x:Name="IconsSwitch" Style="{StaticResource Switch}" Margin="0,14,0,0" Content="Hide desktop icons while showing"/>
+                  <CheckBox x:Name="FullscreenSwitch" Style="{StaticResource Switch}" Margin="0,14,0,0" Content="Wait while a full-screen app is open"/>
+                  <Grid Margin="0,16,0,0">
+                    <StackPanel>
+                      <TextBlock Style="{StaticResource Body}" Text="Showcase-and-lock hotkey"/>
+                      <TextBlock x:Name="HotkeyHint" Style="{StaticResource Hint}" Text="Shows the wallpaper now, locks when you return."/>
+                    </StackPanel>
+                    <Button x:Name="HotkeyButton" HorizontalAlignment="Right" VerticalAlignment="Center" Style="{StaticResource Ghost}" Padding="12,7" Content="Ctrl + Alt + L"/>
+                  </Grid>
+                </StackPanel>
+              </Border>
             </StackPanel>
-          </Border>
 
-          <TextBlock Style="{StaticResource Hint}" Margin="4,0,4,8" TextAlignment="Center" Foreground="{StaticResource Faint}"
-                     Text="Closing this window keeps Wakelight running in the tray."/>
-        </StackPanel>
-      </ScrollViewer>
+            <!-- ======================= DISPLAYS ======================= -->
+            <StackPanel x:Name="PanelDisplays" Visibility="Collapsed">
+              <Border Style="{StaticResource CardBox}">
+                <StackPanel>
+                  <Grid>
+                    <TextBlock Style="{StaticResource Eyebrow}" Text="YOUR DESK"/>
+                    <TextBlock x:Name="ScreensText" HorizontalAlignment="Right" Style="{StaticResource Hint}" Text="1 display"/>
+                  </Grid>
+                  <Border Margin="0,12,0,0" Height="150" CornerRadius="12" Background="#0C0B16">
+                    <Canvas x:Name="DisplayMap" Margin="14" ClipToBounds="False"/>
+                  </Border>
+                  <TextBlock x:Name="ModeDescription" Style="{StaticResource Hint}" Margin="0,10,0,0" Text=""/>
+                </StackPanel>
+              </Border>
+
+              <Border Style="{StaticResource CardBox}">
+                <StackPanel>
+                  <TextBlock Style="{StaticResource Eyebrow}" Text="MULTI-MONITOR MODE"/>
+                  <UniformGrid Columns="2" Margin="0,14,0,0">
+                    <RadioButton x:Name="ModeSpan" Style="{StaticResource ModeCard}" GroupName="mode" Margin="0,0,5,10">
+                      <StackPanel>
+                        <TextBlock Style="{StaticResource H2}" FontSize="14" Text="Span"/>
+                        <TextBlock Style="{StaticResource Hint}" FontSize="11" Text="One scene across all screens"/>
+                      </StackPanel>
+                    </RadioButton>
+                    <RadioButton x:Name="ModeMirror" Style="{StaticResource ModeCard}" GroupName="mode" Margin="5,0,0,10">
+                      <StackPanel>
+                        <TextBlock Style="{StaticResource H2}" FontSize="14" Text="Mirror"/>
+                        <TextBlock Style="{StaticResource Hint}" FontSize="11" Text="Full scene on every screen"/>
+                      </StackPanel>
+                    </RadioButton>
+                    <RadioButton x:Name="ModeSpotlight" Style="{StaticResource ModeCard}" GroupName="mode" Margin="0,0,5,0">
+                      <StackPanel>
+                        <TextBlock Style="{StaticResource H2}" FontSize="14" Text="Spotlight"/>
+                        <TextBlock Style="{StaticResource Hint}" FontSize="11" Text="Main glows, others echo"/>
+                      </StackPanel>
+                    </RadioButton>
+                    <RadioButton x:Name="ModeNative" Style="{StaticResource ModeCard}" GroupName="mode" Margin="5,0,0,0">
+                      <StackPanel>
+                        <TextBlock Style="{StaticResource H2}" FontSize="14" Text="Native"/>
+                        <TextBlock Style="{StaticResource Hint}" FontSize="11" Text="Per-monitor wallpapers"/>
+                      </StackPanel>
+                    </RadioButton>
+                  </UniformGrid>
+                  <CheckBox x:Name="AllMonitorsSwitch" Style="{StaticResource Switch}" Margin="0,16,0,0" Content="Show widgets on every monitor"/>
+                </StackPanel>
+              </Border>
+            </StackPanel>
+
+            <!-- ======================= WIDGETS ======================= -->
+            <StackPanel x:Name="PanelWidgets" Visibility="Collapsed">
+              <Border Style="{StaticResource CardBox}">
+                <StackPanel>
+                  <Grid>
+                    <TextBlock Style="{StaticResource H2}" Text="Widgets"/>
+                    <CheckBox x:Name="ClockSwitch" Style="{StaticResource Switch}" HorizontalAlignment="Right"/>
+                  </Grid>
+                  <TextBlock Style="{StaticResource Hint}" Margin="0,4,0,0" Text="What sits on top of your wallpaper during the showcase. The preview on the left updates live."/>
+                </StackPanel>
+              </Border>
+
+              <Border Style="{StaticResource CardBox}">
+                <StackPanel>
+                  <TextBlock Style="{StaticResource Eyebrow}" Text="CLOCK"/>
+                  <WrapPanel x:Name="ClockStyles" Margin="0,12,0,0">
+                    <RadioButton Style="{StaticResource Pill}" GroupName="clock" Tag="classic" Content="Classic"/>
+                    <RadioButton Style="{StaticResource Pill}" GroupName="clock" Tag="bold" Content="Bold"/>
+                    <RadioButton Style="{StaticResource Pill}" GroupName="clock" Tag="stacked" Content="Stacked"/>
+                    <RadioButton Style="{StaticResource Pill}" GroupName="clock" Tag="glow" Content="Glow"/>
+                    <RadioButton Style="{StaticResource Pill}" GroupName="clock" Tag="analog" Content="Analog"/>
+                    <RadioButton Style="{StaticResource Pill}" GroupName="clock" Tag="none" Content="No clock"/>
+                  </WrapPanel>
+                  <CheckBox x:Name="H24Switch" Style="{StaticResource Switch}" Margin="0,8,0,0" Content="24-hour time"/>
+                  <CheckBox x:Name="SecondsSwitch" Style="{StaticResource Switch}" Margin="0,12,0,0" Content="Show seconds"/>
+                </StackPanel>
+              </Border>
+
+              <Border Style="{StaticResource CardBox}">
+                <StackPanel>
+                  <TextBlock Style="{StaticResource Eyebrow}" Text="TEXT UNDER THE CLOCK"/>
+                  <TextBox x:Name="CaptionBox" Style="{StaticResource Field}" Margin="0,12,0,0"/>
+                  <WrapPanel x:Name="Tokens" Margin="0,10,0,0">
+                    <Button Style="{StaticResource Token}" Content="{}{date}"/>
+                    <Button Style="{StaticResource Token}" Content="{}{day}"/>
+                    <Button Style="{StaticResource Token}" Content="{}{time}"/>
+                    <Button Style="{StaticResource Token}" Content="{}{away}"/>
+                    <Button Style="{StaticResource Token}" Content="{}{wallpaper}"/>
+                    <Button Style="{StaticResource Token}" Content="\n"/>
+                  </WrapPanel>
+                  <TextBlock Style="{StaticResource Hint}" Margin="0,4,0,0" Text="Write anything: “Back in 5 — grabbing coffee ☕”. Click a token to insert it; \n starts a new line."/>
+                </StackPanel>
+              </Border>
+
+              <Border Style="{StaticResource CardBox}">
+                <StackPanel>
+                  <TextBlock Style="{StaticResource Eyebrow}" Text="LOOK"/>
+                  <TextBlock Style="{StaticResource Body}" Margin="0,12,0,8" Text="Position"/>
+                  <WrapPanel x:Name="Positions">
+                    <RadioButton Style="{StaticResource Pill}" GroupName="pos" Tag="topleft" Content="Top left"/>
+                    <RadioButton Style="{StaticResource Pill}" GroupName="pos" Tag="topright" Content="Top right"/>
+                    <RadioButton Style="{StaticResource Pill}" GroupName="pos" Tag="center" Content="Center"/>
+                    <RadioButton Style="{StaticResource Pill}" GroupName="pos" Tag="bottomleft" Content="Bottom left"/>
+                    <RadioButton Style="{StaticResource Pill}" GroupName="pos" Tag="bottomright" Content="Bottom right"/>
+                  </WrapPanel>
+                  <Grid Margin="0,8,0,0">
+                    <TextBlock Style="{StaticResource Body}" Text="Size"/>
+                    <TextBlock x:Name="SizeValue" HorizontalAlignment="Right" Style="{StaticResource H2}" Foreground="{StaticResource Ember}" Text="100%"/>
+                  </Grid>
+                  <Slider x:Name="SizeSlider" Style="{StaticResource Range}" Minimum="0.6" Maximum="1.6" SmallChange="0.05" LargeChange="0.1"
+                          IsSnapToTickEnabled="True" TickFrequency="0.05" Margin="0,6,0,0"/>
+                  <TextBlock Style="{StaticResource Body}" Margin="0,14,0,8" Text="Accent"/>
+                  <StackPanel x:Name="Accents" Orientation="Horizontal">
+                    <RadioButton Style="{StaticResource Swatch}" GroupName="accent" Tag="ember" ToolTip="Ember">
+                      <RadioButton.Background><LinearGradientBrush StartPoint="0,0" EndPoint="1,1"><GradientStop Color="#FFC46B"/><GradientStop Color="#FF5C8A" Offset="1"/></LinearGradientBrush></RadioButton.Background>
+                    </RadioButton>
+                    <RadioButton Style="{StaticResource Swatch}" GroupName="accent" Tag="rose" ToolTip="Rose">
+                      <RadioButton.Background><LinearGradientBrush StartPoint="0,0" EndPoint="1,1"><GradientStop Color="#FF7AA8"/><GradientStop Color="#B05CFF" Offset="1"/></LinearGradientBrush></RadioButton.Background>
+                    </RadioButton>
+                    <RadioButton Style="{StaticResource Swatch}" GroupName="accent" Tag="ice" ToolTip="Ice">
+                      <RadioButton.Background><LinearGradientBrush StartPoint="0,0" EndPoint="1,1"><GradientStop Color="#9FE2FF"/><GradientStop Color="#7A8CFF" Offset="1"/></LinearGradientBrush></RadioButton.Background>
+                    </RadioButton>
+                    <RadioButton Style="{StaticResource Swatch}" GroupName="accent" Tag="mint" ToolTip="Mint">
+                      <RadioButton.Background><LinearGradientBrush StartPoint="0,0" EndPoint="1,1"><GradientStop Color="#9BF2C4"/><GradientStop Color="#38C6D0" Offset="1"/></LinearGradientBrush></RadioButton.Background>
+                    </RadioButton>
+                    <RadioButton Style="{StaticResource Swatch}" GroupName="accent" Tag="white" ToolTip="Moonlight" Background="#F4EEE6"/>
+                  </StackPanel>
+                </StackPanel>
+              </Border>
+
+              <Border Style="{StaticResource CardBox}">
+                <StackPanel>
+                  <TextBlock Style="{StaticResource Eyebrow}" Text="EXTRAS"/>
+                  <CheckBox x:Name="AwaySwitch" Style="{StaticResource Switch}" Margin="0,14,0,0" Content="“Away for” timer"/>
+                  <CheckBox x:Name="ChipSwitch" Style="{StaticResource Switch}" Margin="0,14,0,0" Content="Wallpaper name"/>
+                  <CheckBox x:Name="BrandSwitch" Style="{StaticResource Switch}" Margin="0,14,0,0" Content="Wakelight mark"/>
+                  <CheckBox x:Name="WeatherSwitch" Style="{StaticResource Switch}" Margin="0,14,0,0" Content="Live weather"/>
+                  <StackPanel x:Name="WeatherOptions" Margin="0,10,0,0">
+                    <Grid>
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                      </Grid.ColumnDefinitions>
+                      <TextBox x:Name="CityBox" Style="{StaticResource Field}"/>
+                      <Button x:Name="CityButton" Grid.Column="1" Margin="8,0,0,0" Style="{StaticResource Ghost}" Padding="12,7" Content="Set city"/>
+                    </Grid>
+                    <CheckBox x:Name="FahrenheitSwitch" Style="{StaticResource Switch}" Margin="0,12,0,0" Content="Fahrenheit"/>
+                    <TextBlock x:Name="WeatherStatus" Style="{StaticResource Hint}" Margin="0,8,0,0" Text="Type your city, e.g. Casablanca. Weather by Open-Meteo, no account needed."/>
+                  </StackPanel>
+                </StackPanel>
+              </Border>
+            </StackPanel>
+
+            <!-- ======================= SETTINGS ======================= -->
+            <StackPanel x:Name="PanelSettings" Visibility="Collapsed">
+              <Border Style="{StaticResource CardBox}">
+                <StackPanel>
+                  <TextBlock Style="{StaticResource Eyebrow}" Text="LOCK SCREEN"/>
+                  <CheckBox x:Name="SyncSwitch" Style="{StaticResource Switch}" Margin="0,14,0,0" Content="Match the lock screen to my wallpaper"/>
+                  <Grid Margin="0,10,0,0">
+                    <TextBlock x:Name="SyncStatus" Style="{StaticResource Hint}" Margin="0,0,110,0" Text="A sharp still is captured during each showcase."/>
+                    <Button x:Name="RefreshLockButton" Style="{StaticResource Link}" HorizontalAlignment="Right" VerticalAlignment="Top" Content="Refresh now"/>
+                  </Grid>
+                </StackPanel>
+              </Border>
+
+              <Border Style="{StaticResource CardBox}">
+                <StackPanel>
+                  <TextBlock Style="{StaticResource Eyebrow}" Text="GENERAL"/>
+                  <CheckBox x:Name="StartupSwitch" Style="{StaticResource Switch}" Margin="0,14,0,0" Content="Start with Windows"/>
+                  <TextBlock Style="{StaticResource Body}" Margin="0,16,0,0" Text="Wallpaper Engine folder"/>
+                  <Grid Margin="0,4,0,0">
+                    <TextBlock x:Name="FolderText" Style="{StaticResource Hint}" Margin="0,0,70,0" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" Text="Detecting…"/>
+                    <Button x:Name="FolderButton" Style="{StaticResource Link}" HorizontalAlignment="Right" Content="Change"/>
+                  </Grid>
+                  <Grid Margin="0,14,0,0">
+                    <Button x:Name="LogButton" Style="{StaticResource Link}" HorizontalAlignment="Left" Content="Open activity log"/>
+                    <Button x:Name="QuitButton" Style="{StaticResource Link}" HorizontalAlignment="Right" Foreground="{StaticResource Sub}" Content="Quit Wakelight"/>
+                  </Grid>
+                </StackPanel>
+              </Border>
+
+              <TextBlock Style="{StaticResource Hint}" Margin="4,0,4,8" TextAlignment="Center" Foreground="{StaticResource Faint}"
+                         Text="Closing this window keeps Wakelight running in the tray."/>
+            </StackPanel>
+          </Grid>
+        </ScrollViewer>
+      </Grid>
     </Grid>
   </Grid>
 </Window>
+

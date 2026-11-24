@@ -22,6 +22,42 @@ Step away and your wallpaper takes the whole screen, live, with a quiet clock. M
   <img src="docs/showcase.jpg" width="760" alt="Wakelight showcase with clock">
 </p>
 
+## Every monitor, your way (new in 1.1)
+
+Wallpaper Engine often plays on just one screen. Wakelight fills them all:
+
+| Mode | What you get |
+| --- | --- |
+| **Span** | One continuous scene across all monitors, like a single giant screen |
+| **Mirror** | The full scene on every monitor |
+| **Spotlight** | Main monitor in full glow, the others show a dimmed echo |
+| **Native** | Each monitor shows whatever Wallpaper Engine draws on it |
+
+<p align="center">
+  <img src="docs/span.jpg" width="760" alt="Span mode across two monitors">
+  <br><sub>Span across a 1680×1050 + 1920×1080 desk</sub>
+</p>
+
+<p align="center">
+  <img src="docs/displays-tab.png" width="600" alt="Displays tab with a live map of your monitors">
+</p>
+
+## Widgets (new in 1.1)
+
+- **Clock styles:** Classic, Bold, Stacked, Glow and an animated Analog face, 12/24 h, optional seconds.
+- **Your own text under the clock**, with tokens: `{date}`, `{day}`, `{time}`, `{away}`, `{wallpaper}`, `\n` for a new line. *"Back in 5 — grabbing coffee"*, anyone?
+- **Extras:** an "away for" timer, live weather (Open-Meteo, no account; only the city name you type is sent), the wallpaper's name.
+- **Look:** five positions, size from 60 % to 160 %, and five accent colors (Ember, Rose, Ice, Mint, Moonlight).
+- **Where:** on the main monitor only, or on every monitor.
+- The **preview updates live** in the app as you change things.
+
+<p align="center">
+  <img src="docs/clock-styles.jpg" width="760" alt="Bold, Stacked, Glow and Analog clock styles">
+</p>
+<p align="center">
+  <img src="docs/widgets-tab.png" width="600" alt="Widgets tab with live preview">
+</p>
+
 <sub>Screenshots use an original demo scene ("Ember Lake"), not a Workshop wallpaper.</sub>
 
 ## Features

@@ -31,6 +31,46 @@ namespace Wakelight
         [DataMember] public string WallpaperEngineDir;      // empty = auto-detect
         [DataMember] public bool FirstRunDone;
 
+        // ---- multi-monitor
+        [DataMember] public string DisplayMode;             // span | mirror | spotlight | native
+        [DataMember] public bool WidgetsOnAllMonitors;
+
+        // ---- widgets
+        [DataMember] public string ClockStyle;              // classic | bold | stacked | glow | analog | none
+        [DataMember] public bool Clock24h;
+        [DataMember] public bool ClockSeconds;
+        [DataMember] public string WidgetPosition;          // bottomleft | bottomright | center | topleft | topright
+        [DataMember] public double WidgetScale;
+        [DataMember] public string Caption;                 // supports {date} {day} {time} {wallpaper} {away}
+        [DataMember] public string Accent;                  // ember | rose | ice | mint | white
+        [DataMember] public bool ShowAway;
+        [DataMember] public bool ShowWallpaperChip;
+        [DataMember] public bool ShowBrand;
+        [DataMember] public bool ShowWeather;
+        [DataMember] public string WeatherCity;
+        [DataMember] public bool WeatherFahrenheit;
+        [DataMember] public bool WidgetsVersion;            // set once the widget defaults were applied
+
+        /// <summary>Fill in defaults for fields added after 1.0 (old settings files lack them).</summary>
+        public void Upgrade()
+        {
+            if (string.IsNullOrEmpty(DisplayMode)) DisplayMode = "span";
+            if (!WidgetsVersion)
+            {
+                WidgetsVersion = true;
+                ClockStyle = "classic"; Clock24h = true; ClockSeconds = false;
+                WidgetPosition = "bottomleft"; WidgetScale = 1.0; Caption = "{date}";
+                Accent = "ember"; ShowAway = true; ShowWallpaperChip = false; ShowBrand = true;
+                ShowWeather = false; WeatherCity = ""; WeatherFahrenheit = false;
+            }
+            if (WidgetScale <= 0.3) WidgetScale = 1.0;
+            if (Caption == null) Caption = "";
+            if (WeatherCity == null) WeatherCity = "";
+            if (string.IsNullOrEmpty(ClockStyle)) ClockStyle = "classic";
+            if (string.IsNullOrEmpty(WidgetPosition)) WidgetPosition = "bottomleft";
+            if (string.IsNullOrEmpty(Accent)) Accent = "ember";
+        }
+
         public static Settings Defaults()
         {
             var s = new Settings();
@@ -45,6 +85,7 @@ namespace Wakelight
             s.HotkeyModifiers = 2 | 1;      // Ctrl+Alt
             s.HotkeyKey = 0x4C;             // L
             s.WallpaperEngineDir = "";
+            s.Upgrade();
             return s;
         }
 
@@ -69,6 +110,7 @@ namespace Wakelight
                         var s = (Settings)new DataContractJsonSerializer(typeof(Settings)).ReadObject(fs);
                         if (s.ShowcaseAfterMinutes <= 0) s.ShowcaseAfterMinutes = 5;
                         if (s.WallpaperEngineDir == null) s.WallpaperEngineDir = "";
+                        s.Upgrade();
                         return s;
                     }
             }

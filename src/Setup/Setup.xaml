@@ -48,7 +48,7 @@
       <!-- Welcome -->
       <Grid x:Name="PageWelcome" Margin="40,56,40,32">
         <StackPanel>
-          <TextBlock x:Name="WelcomeEyebrow" Style="{StaticResource Eyebrow}" Text="SETUP · VERSION 1.0"/>
+          <TextBlock x:Name="WelcomeEyebrow" Style="{StaticResource Eyebrow}" Text="SETUP · VERSION 1.1"/>
           <TextBlock x:Name="WelcomeTitle" Style="{StaticResource H1}" FontSize="30" Margin="0,10,0,0" TextWrapping="Wrap"
                      Text="Let your wallpaper keep the lights on."/>
           <TextBlock x:Name="WelcomeBody" Style="{StaticResource Body}" Foreground="{StaticResource Sub}" Margin="0,14,0,0" LineHeight="21"

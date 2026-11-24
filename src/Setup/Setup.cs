@@ -22,15 +22,15 @@ using Microsoft.Win32;
 [assembly: AssemblyTitle("Wakelight Setup")]
 [assembly: AssemblyProduct("Wakelight")]
 [assembly: AssemblyDescription("Installs Wakelight")]
-[assembly: AssemblyVersion("1.0.0.0")]
-[assembly: AssemblyFileVersion("1.0.0.0")]
+[assembly: AssemblyVersion("1.1.0.0")]
+[assembly: AssemblyFileVersion("1.1.0.0")]
 
 namespace WakelightSetup
 {
     public static class Program
     {
         const string AppName = "Wakelight";
-        const string Version = "1.0";
+        const string Version = "1.1";
         const string UninstallKey = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Wakelight";
         const string CspKey = @"SOFTWARE\Microsoft\Windows\CurrentVersion\PersonalizationCSP";
 
