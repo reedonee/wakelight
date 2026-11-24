@@ -51,6 +51,11 @@ namespace Wakelight
         [DataMember] public bool WeatherFahrenheit;
         [DataMember] public bool WidgetsVersion;            // set once the widget defaults were applied
 
+        // ---- window
+        [DataMember] public double WindowWidth;
+        [DataMember] public double WindowHeight;
+        [DataMember] public bool WindowMaximized;
+
         /// <summary>Fill in defaults for fields added after 1.0 (old settings files lack them).</summary>
         public void Upgrade()
         {

@@ -123,9 +123,10 @@ namespace Wakelight
                 double showAt = Settings.ShowcaseAfterMinutes * 60;
                 double lockAt = Settings.LockAfterMinutes * 60;
                 bool blocked = Settings.SkipFullscreenApps && FullscreenAppInFront();
-                if (!blocked && IdleSeconds >= showAt && (lockAt <= 0 || lockAt > showAt))
+                // Equal times mean "showcase, then lock on return" (the lock is applied when it closes).
+                if (!blocked && IdleSeconds >= showAt && (lockAt <= 0 || lockAt >= showAt))
                     Open(IdleSeconds, false);
-                else if (!blocked && lockAt > 0 && lockAt <= showAt && IdleSeconds >= lockAt)
+                else if (!blocked && lockAt > 0 && lockAt < showAt && IdleSeconds >= lockAt)
                 {
                     Log.Write("lock: idle reached lock time before showcase time");
                     Native.LockWorkStation();

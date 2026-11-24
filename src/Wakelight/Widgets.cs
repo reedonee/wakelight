@@ -243,6 +243,8 @@ namespace Wakelight
                     chip.Visibility = w == null ? Visibility.Collapsed : Visibility.Visible;
                     if (w == null) return;
                     icon.Text = w.Glyph;
+                    icon.FontFamily = new FontFamily(Weather.GlyphFont);
+                    icon.FontSize = 20;
                     txt.Text = w.Temperature.ToString("0") + "°  " + w.Summary + " · " + w.Place;
                 };
                 weatherRefresh();

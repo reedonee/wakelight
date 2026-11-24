@@ -87,19 +87,20 @@ namespace Wakelight
             }
         }
 
-        // Segoe Fluent Icons / MDL2 weather glyphs
+        /// <summary>Glyph from Segoe UI Symbol (ships with every Windows 10/11).</summary>
+        public const string GlyphFont = "Segoe UI Symbol";
+
         static string GlyphFor(int code, bool day)
         {
-            if (code == 0) return day ? "" : "";           // sun / moon
-            if (code <= 2) return day ? "" : "";           // partly cloudy
-            if (code == 3) return "";                            // cloudy
-            if (code == 45 || code == 48) return "";             // fog
-            if (code >= 51 && code <= 67) return "";             // rain
-            if (code >= 71 && code <= 77) return "";             // snow
-            if (code >= 80 && code <= 82) return "";             // showers
-            if (code >= 85 && code <= 86) return "";
-            if (code >= 95) return "";                           // thunder
-            return "";
+            if (code == 0) return day ? "☀" : "☾";           // sun / moon
+            if (code <= 2) return day ? "⛅" : "☁";           // sun behind cloud / cloud
+            if (code == 3 || code == 45 || code == 48) return "☁"; // cloud (fog)
+            if (code >= 51 && code <= 67) return "☂";             // umbrella (rain)
+            if (code >= 71 && code <= 77) return "❄";             // snowflake
+            if (code >= 80 && code <= 82) return "☔";             // umbrella with rain
+            if (code >= 85 && code <= 86) return "❄";
+            if (code >= 95) return "⛈";                           // thunder cloud
+            return "☁";
         }
 
         static string SummaryFor(int code)

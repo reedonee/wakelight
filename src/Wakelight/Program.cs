@@ -79,6 +79,7 @@ namespace Wakelight
 
         public static void Quit()
         {
+            if (main.Window.IsVisible) main.SaveWindow();
             engine.Stop();
             tray.Visible = false;
             tray.Dispose();

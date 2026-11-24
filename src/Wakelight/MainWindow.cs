@@ -82,10 +82,37 @@ namespace Wakelight
             VersionText.Text = Program.Version;
 
             Window.SourceInitialized += (s, e) => Native.StyleWindow(new WindowInteropHelper(Window).Handle);
-            Window.Closing += (s, e) => { e.Cancel = true; Window.Hide(); PreviewVideo.Pause(); };
+            Window.Closing += (s, e) => { e.Cancel = true; SaveWindow(); Window.Hide(); PreviewVideo.Pause(); };
             Window.IsVisibleChanged += (s, e) => { if (Window.IsVisible) { shownPreviewFor = null; Refresh(); } };
             Window.PreviewKeyDown += OnPreviewKeyDown;
             Timeline.SizeChanged += (s, e) => DrawTimeline();
+
+            // ---- window size, maximize, responsive layout
+            var st0 = engine.Settings;
+            var work = SystemParameters.WorkArea;
+            if (st0.WindowWidth >= Window.MinWidth && st0.WindowHeight >= Window.MinHeight)
+            {
+                Window.Width = Math.Min(st0.WindowWidth, work.Width);
+                Window.Height = Math.Min(st0.WindowHeight, work.Height);
+            }
+            else
+            {
+                Window.Width = Math.Min(Window.Width, work.Width - 40);
+                Window.Height = Math.Min(Window.Height, work.Height - 40);
+            }
+            if (st0.WindowMaximized) Window.WindowState = WindowState.Maximized;
+            var maxButton = Find<Button>("MaxButton");
+            maxButton.Click += (s, e) => Window.WindowState = Window.WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
+            Window.StateChanged += (s, e) =>
+            {
+                bool max = Window.WindowState == WindowState.Maximized;
+                // a maximized chrome-less window overhangs the screen by its resize border
+                Find<Grid>("Root").Margin = max ? new Thickness(7) : new Thickness(0);
+                maxButton.Content = max ? "" : "";
+                maxButton.ToolTip = max ? "Restore" : "Maximize";
+            };
+            Window.SizeChanged += (s, e) => ApplyLayout();
+            Find<Grid>("Side").SizeChanged += (s, e) => ApplyMasonry();
 
             Find<Button>("MinButton").Click += (s, e) => Window.WindowState = WindowState.Minimized;
             Find<Button>("CloseButton").Click += (s, e) => Window.Close();
@@ -207,6 +234,67 @@ namespace Wakelight
                 WeatherStatus.Text = w.Place + ": " + w.Temperature.ToString("0") + "° " + w.Summary.ToLowerInvariant() + " · updated " + w.Fetched.ToString("HH:mm");
             else if (engine.Settings.ShowWeather && engine.Settings.WeatherCity.Length > 0)
                 WeatherStatus.Text = "Couldn't find weather for “" + engine.Settings.WeatherCity + "” yet. Check the spelling or your connection.";
+        }
+
+        // ----------------------------------------------------------- layout
+        string layoutMode = "";
+
+        /// <summary>
+        /// compact (&lt; 1000 px): preview on top, settings below.
+        /// normal: preview left, settings right.  wide (&gt;= 1400 px): settings get more room.
+        /// </summary>
+        void ApplyLayout()
+        {
+            double w = Window.ActualWidth;
+            string mode = w < 1000 ? "compact" : w >= 1400 ? "wide" : "normal";
+            if (mode == layoutMode) return;
+            layoutMode = mode;
+            var body = Find<Grid>("Body");
+            var side = Find<Grid>("Side");
+            var timeline = Find<FrameworkElement>("TimelineCard");
+            if (mode == "compact")
+            {
+                body.ColumnDefinitions[0].Width = new GridLength(1, GridUnitType.Star);
+                body.ColumnDefinitions[1].Width = new GridLength(0);
+                body.ColumnDefinitions[2].Width = new GridLength(0);
+                body.RowDefinitions[0].Height = new GridLength(1, GridUnitType.Star);
+                body.RowDefinitions[1].Height = new GridLength(1.3, GridUnitType.Star);
+                Grid.SetRow(side, 1); Grid.SetColumn(side, 0);
+                side.Margin = new Thickness(0, 16, 0, 0);
+                timeline.Visibility = Visibility.Collapsed;
+            }
+            else
+            {
+                body.ColumnDefinitions[0].Width = new GridLength(mode == "wide" ? 1 : 1.15, GridUnitType.Star);
+                body.ColumnDefinitions[1].Width = new GridLength(24);
+                body.ColumnDefinitions[2].Width = new GridLength(mode == "wide" ? 1.3 : 1, GridUnitType.Star);
+                body.RowDefinitions[0].Height = new GridLength(1, GridUnitType.Star);
+                body.RowDefinitions[1].Height = new GridLength(0);
+                Grid.SetRow(side, 0); Grid.SetColumn(side, 2);
+                side.Margin = new Thickness(0);
+                timeline.Visibility = Visibility.Visible;
+            }
+            Log.Write("layout: " + mode);
+        }
+
+        void ApplyMasonry()
+        {
+            double sw = Find<Grid>("Side").ActualWidth;
+            int cols = sw >= 760 ? 2 : 1;
+            foreach (var p in new[] { PanelShowcase, PanelDisplays, PanelWidgets, PanelSettings })
+            {
+                var m = p as Masonry;
+                if (m != null && m.Columns != cols) m.Columns = cols;
+            }
+        }
+
+        public void SaveWindow()
+        {
+            var st = engine.Settings;
+            st.WindowMaximized = Window.WindowState == WindowState.Maximized;
+            var r = Window.RestoreBounds;
+            if (!r.IsEmpty && r.Width >= Window.MinWidth) { st.WindowWidth = r.Width; st.WindowHeight = r.Height; }
+            st.Save();
         }
 
         // ------------------------------------------------------------- tabs
@@ -507,17 +595,24 @@ namespace Wakelight
             Timeline.Children.Add(Bar(0, W, y, new SolidColorBrush(Color.FromRgb(0x2A, 0x26, 0x45))));
             double xs = X(show);
             double xl = lck > 0 ? X(lck) : W;
-            if (lck <= 0 || lck > show)
+            Brush ember = (Brush)Application.Current.Resources["Ember"], rose = (Brush)Application.Current.Resources["Rose"];
+            var lockBar = new SolidColorBrush(Color.FromArgb(200, 0xB8, 0x2E, 0x5C));
+            if (lck > 0 && Math.Abs(lck - show) < 1)
+            {
+                Timeline.Children.Add(Bar(xs, W, y, lockBar));
+                Timeline.Children.Add(Label(xs, W, "Showcase, then lock on return · " + Minutes(ShowcaseSlider.Value), ember));
+            }
+            else if (lck <= 0 || lck > show)
             {
                 Timeline.Children.Add(Bar(xs, W, y, (Brush)Application.Current.Resources["GlowH"]));
-                if (lck > 0) Timeline.Children.Add(Bar(xl, W, y, new SolidColorBrush(Color.FromArgb(200, 0xB8, 0x2E, 0x5C))));
-                Timeline.Children.Add(Label(xs, "Showcase · " + Minutes(ShowcaseSlider.Value), (Brush)Application.Current.Resources["Ember"]));
-                if (lck > 0) Timeline.Children.Add(Label(xl, "Lock · " + Minutes(LockSlider.Value), (Brush)Application.Current.Resources["Rose"]));
+                if (lck > 0) Timeline.Children.Add(Bar(xl, W, y, lockBar));
+                Timeline.Children.Add(Label(xs, W, "Showcase · " + Minutes(ShowcaseSlider.Value), ember));
+                if (lck > 0) Timeline.Children.Add(Label(xl, W, "Lock · " + Minutes(LockSlider.Value), rose));
             }
             else
             {
-                Timeline.Children.Add(Bar(xl, W, y, new SolidColorBrush(Color.FromArgb(200, 0xB8, 0x2E, 0x5C))));
-                Timeline.Children.Add(Label(xl, "Lock · " + Minutes(LockSlider.Value) + " (before showcase)", (Brush)Application.Current.Resources["Rose"]));
+                Timeline.Children.Add(Bar(xl, W, y, lockBar));
+                Timeline.Children.Add(Label(xl, W, "Locks at " + Minutes(LockSlider.Value) + ", before the showcase", rose));
             }
 
             // "now" marker
@@ -536,12 +631,27 @@ namespace Wakelight
             return r;
         }
 
-        static UIElement Label(double x, string text, Brush color)
+        /// <summary>Marker + text at x; flips to the left of the marker when it would run past the edge.</summary>
+        static UIElement Label(double x, double width, string text, Brush color)
         {
+            var bar = new Rectangle { Width = 2, Height = 12, Fill = color };
+            var txt = new TextBlock { Text = text, FontSize = 11, Foreground = color, FontWeight = FontWeights.SemiBold };
             var g = new StackPanel { Orientation = Orientation.Horizontal };
-            g.Children.Add(new Rectangle { Width = 2, Height = 12, Fill = color, Margin = new Thickness(0, 0, 6, 0) });
-            g.Children.Add(new TextBlock { Text = text, FontSize = 11, Foreground = color, FontWeight = FontWeights.SemiBold });
-            Canvas.SetLeft(g, x - 1); Canvas.SetTop(g, 22);
+            txt.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+            double tw = txt.DesiredSize.Width + 8;
+            if (x + tw > width && x - tw >= 0)
+            {
+                txt.Margin = new Thickness(0, 0, 6, 0);
+                g.Children.Add(txt); g.Children.Add(bar);
+                Canvas.SetLeft(g, x - tw + 1);
+            }
+            else
+            {
+                bar.Margin = new Thickness(0, 0, 6, 0);
+                g.Children.Add(bar); g.Children.Add(txt);
+                Canvas.SetLeft(g, Math.Max(0, Math.Min(x - 1, width - tw)));
+            }
+            Canvas.SetTop(g, 22);
             return g;
         }
     }
